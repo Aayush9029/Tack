@@ -36,6 +36,24 @@ struct NoteStoreTests {
         #expect(updated.style == .classic)
     }
 
+    @Test func punctuationFindsNothingInsteadOfFailing() throws {
+        let store = NoteStore()
+        try store.add(body: "plan", theme: NoteTheme())
+        #expect(try store.search("!!!").isEmpty)
+        #expect(try store.search("pla").map(\.0.body) == ["plan"])
+        #expect(throws: NoteStore.Failure.notFound("  ")) { try store.resolve("  ") }
+    }
+
+    @Test func appendKeepsAConcurrentTitle() throws {
+        @Dependency(\.defaultDatabase) var database
+        let store = NoteStore()
+        let note = try store.add(body: "a", theme: NoteTheme())
+        try database.write { db in try Note.find(note.id).update { $0.title = "Renamed in the app" }.execute(db) }
+        let updated = try store.modify(note.id) { $0.body += "\nb" }
+        #expect(updated.title == "Renamed in the app")
+        #expect(updated.body == "a\nb")
+    }
+
     @Test func fileNamesAreSafe() {
         let note = Note(id: Note.ID(UUID(0)), body: "a/b: c?")
         #expect(NoteStore.fileName(for: note) == "a-b- c- (00000000).md")

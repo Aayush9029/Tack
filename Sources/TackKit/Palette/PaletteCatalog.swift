@@ -13,10 +13,8 @@ public enum PaletteCatalog {
         [
             PaletteItem(.newNote, "New Note", symbol: "plus", shortcut: ["⌘", "N"], keywords: ["create", "add"]),
             PaletteItem(.newWindow, "New Note in Window", symbol: "macwindow.badge.plus", shortcut: ["⌥", "⌘", "N"], keywords: ["open"]),
-            PaletteItem(.duplicate, "Duplicate Note", symbol: "plus.square.on.square", shortcut: ["⌘", "D"], keywords: ["copy"]),
+            PaletteItem(.duplicate, "Duplicate Note", symbol: "plus.square.on.square", shortcut: ["⌘", "D"], keywords: ["clone"]),
             PaletteItem(.browse, "Browse Notes", symbol: "rectangle.on.rectangle.angled", shortcut: ["⌘", "P"], keywords: ["search", "open", "all"]),
-            PaletteItem(.goBack, "Go Back", symbol: "arrow.backward.circle", shortcut: ["⌘", "["], keywords: ["history"], isEnabled: context.canGoBack, group: 1),
-            PaletteItem(.goForward, "Go Forward", symbol: "arrow.forward.circle", shortcut: ["⌘", "]"], keywords: ["history"], isEnabled: context.canGoForward, group: 1),
             PaletteItem(.previousNote, "Previous Note", symbol: "chevron.backward", shortcut: ["⌥", "⌘", "←"], keywords: ["swipe", "newer"], isEnabled: context.hasPrevious, group: 1),
             PaletteItem(.nextNote, "Next Note", symbol: "chevron.forward", shortcut: ["⌥", "⌘", "→"], keywords: ["swipe", "older"], isEnabled: context.hasNext, group: 1),
             PaletteItem(.find, "Find in Note", symbol: "text.magnifyingglass", shortcut: ["⌘", "F"], keywords: ["search", "replace"], group: 2),

@@ -50,6 +50,12 @@ public final class PaletteModel: Identifiable {
         let limit = page == .notes ? tuning.resultLimit : 8
         if !text.isEmpty {
             do { try await clock.sleep(for: tuning.debounce) } catch { return }
+            // Punctuation alone is no query; FTS5 would reject it.
+            guard NoteSearch.ftsQuery(text) != nil else {
+                noteHits = []
+                rebuild()
+                return
+            }
         }
         let state = Log.signposter.beginInterval("Search notes")
         defer { Log.signposter.endInterval("Search notes", state) }

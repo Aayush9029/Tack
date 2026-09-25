@@ -32,7 +32,7 @@ struct GeneralPane: View {
 
                     ToggleCard(
                         title: "Show in Menu Bar",
-                        description: "The pin in the menu bar. Off, the shortcuts in Settings bring your notes back.",
+                        description: "Shows a pin in the menu bar. When it is off, use the global shortcuts to show your notes.",
                         icon: "menubar.rectangle",
                         isOn: preferences.showsMenuBarIcon,
                         action: { preferences.$showsMenuBarIcon.withLock { $0.toggle() } }

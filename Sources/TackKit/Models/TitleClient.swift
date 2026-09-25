@@ -18,11 +18,12 @@ extension TitleClient: DependencyKey {
             model: model,
             instructions: "You name sticky notes. Give a short title that says what the note is about."
         )
-        let response = try await session.respond(
+        // Guardrails, language and asset errors mean no title, not a problem to report.
+        guard let response = try? await session.respond(
             to: Prompt { "Note:\n\(body)" },
             generating: SuggestedTitle.self,
             options: GenerationOptions(samplingMode: .greedy, maximumResponseTokens: 32)
-        )
+        ) else { return nil }
         return clean(response.content.title)
     }
 

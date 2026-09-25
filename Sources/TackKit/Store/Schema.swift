@@ -4,7 +4,11 @@ import SQLiteData
 
 public extension DependencyValues {
     mutating func bootstrapDatabase() throws {
-        let database = try SQLiteData.defaultDatabase(path: Self.databaseURL().path(percentEncoded: false))
+        // The app and the command line tool write one file; a writer waits its turn
+        // instead of failing with "database is locked".
+        var configuration = Configuration()
+        configuration.busyMode = .timeout(5)
+        let database = try SQLiteData.defaultDatabase(path: Self.databaseURL().path(percentEncoded: false), configuration: configuration)
         try Self.migrate(database)
         defaultDatabase = database
     }

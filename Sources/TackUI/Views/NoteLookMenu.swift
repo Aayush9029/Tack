@@ -31,8 +31,6 @@ struct NoteLookMenu: View {
 
         Divider()
         Button("Rename…", action: model.renameButtonTapped)
-        Button(model.isPinned ? "Unpin from Top" : "Pin on Top", action: model.pinButtonTapped)
-        Button(model.isFocusMode ? "Exit Focus Mode" : "Focus Mode", action: model.focusModeToggled)
     }
 
     private func selecting(_ isSelected: Bool, _ select: @escaping () -> Void) -> Binding<Bool> {

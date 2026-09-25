@@ -6,7 +6,7 @@ public enum PalettePage: Hashable, Sendable {
 
     public var placeholder: String {
         switch self {
-        case .root: "Search for actions or notes…"
+        case .root: "Search commands or notes…"
         case .copyAs: "Copy note as…"
         case .theme: "Style, tint, appearance…"
         case .notes: "Search notes…"

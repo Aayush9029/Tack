@@ -27,8 +27,6 @@ public final class NoteWindowModel: Identifiable {
     /// Bumped whenever the editor must reload the body from the model.
     public private(set) var revision = 0
     public private(set) var direction = NavigationDirection.none
-    public private(set) var backStack: [Note.ID] = []
-    public private(set) var forwardStack: [Note.ID] = []
     public private(set) var hasPrevious = false
     public private(set) var hasNext = false
     public var isPinned: Bool
@@ -40,10 +38,13 @@ public final class NoteWindowModel: Identifiable {
     /// should re-render per keystroke.
     @ObservationIgnored public private(set) var body: String
     @ObservationIgnored private var createdAt: Date
-    @ObservationIgnored private var isDirty = false
+    /// The body as the store last had it. Typing is unsaved while `body` differs,
+    /// which a save only settles once its write has landed.
+    @ObservationIgnored private var savedBody: String
     @ObservationIgnored private var saveTask: Task<Void, Never>?
     /// The start of the body the inferred title was made from, so it is only redone when that changes.
     @ObservationIgnored private var inferredFrom = ""
+    @ObservationIgnored private var titleGeneration = 0
 
     @ObservationIgnored public var otherOpenNoteIDs: () -> Set<Note.ID> = { [] }
     @ObservationIgnored public var onNoteDeleted: (Note.ID) -> Void = { _ in }
@@ -57,12 +58,13 @@ public final class NoteWindowModel: Identifiable {
         displayTitle = note.displayTitle
         inferredTitle = note.inferredTitle
         body = note.body
+        savedBody = note.body
         createdAt = note.createdAt
         self.isPinned = isPinned
+        inferredFrom = note.inferredTitle.isEmpty ? "" : Self.inferenceKey(note.body)
     }
 
-    public var canGoBack: Bool { !backStack.isEmpty }
-    public var canGoForward: Bool { !forwardStack.isEmpty }
+    private var isDirty: Bool { body != savedBody }
 
     public var isEmpty: Bool {
         customTitle.isEmpty && body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -71,8 +73,6 @@ public final class NoteWindowModel: Identifiable {
     public var paletteContext: PaletteContext {
         PaletteContext(
             noteID: noteID,
-            canGoBack: canGoBack,
-            canGoForward: canGoForward,
             hasPrevious: hasPrevious,
             hasNext: hasNext,
             isPinned: isPinned,
@@ -90,7 +90,6 @@ public final class NoteWindowModel: Identifiable {
     public func textChanged(_ text: String) {
         body = text
         refreshDisplayTitle()
-        isDirty = true
         saveTask?.cancel()
         saveTask = Task { [weak self, clock] in
             do { try await clock.sleep(for: .milliseconds(400)) } catch { return }
@@ -102,9 +101,8 @@ public final class NoteWindowModel: Identifiable {
         guard isDirty else { return }
         let state = Log.signposter.beginInterval("Save note")
         defer { Log.signposter.endInterval("Save note", state) }
-        isDirty = false
         let (id, body, now) = (noteID, body, now)
-        await withErrorReporting {
+        let saved = await withErrorReporting {
             try await database.write { db in
                 try Note.find(id).update {
                     $0.body = body
@@ -112,9 +110,16 @@ public final class NoteWindowModel: Identifiable {
                 }
                 .execute(db)
             }
-        }
+            return true
+        } ?? false
+        guard saved, id == noteID else { return }
+        savedBody = body
         onNoteChanged()
-        await inferTitleIfNeeded()
+        await inferTitleIfNeeded(id: id, body: body)
+    }
+
+    private static func inferenceKey(_ body: String) -> String {
+        String(body.prefix(160))
     }
 
     private func refreshDisplayTitle() {
@@ -124,18 +129,20 @@ public final class NoteWindowModel: Identifiable {
 
     /// Asks the on-device model for a title once typing has paused, and only when
     /// the first line would make a poor one and has changed since the last ask.
-    public func inferTitleIfNeeded() async {
+    private func inferTitleIfNeeded(id: Note.ID, body: String) async {
         guard infersTitles, customTitle.isEmpty, NoteText.wantsInferredTitle(body) else { return }
         let sample = String(body.prefix(1200))
-        let key = String(sample.prefix(160))
+        let key = Self.inferenceKey(body)
         guard key != inferredFrom, sample.trimmingCharacters(in: .whitespacesAndNewlines).count >= 12 else { return }
         inferredFrom = key
-        let id = noteID
+        titleGeneration += 1
+        let generation = titleGeneration
         let state = Log.signposter.beginInterval("Infer title")
-        let suggestion = await withErrorReporting { try await titleClient.suggest(sample) } ?? nil
+        let suggestion = (try? await titleClient.suggest(sample)) ?? nil
         Log.signposter.endInterval("Infer title", state)
         Log.titles.debug("Inferred \(suggestion ?? "no title", privacy: .private) for \(id.rawValue, privacy: .public)")
-        guard let suggestion, id == noteID, suggestion != inferredTitle else { return }
+        // A newer ask, or another note in the window, makes this answer stale.
+        guard let suggestion, generation == titleGeneration, id == noteID, suggestion != inferredTitle else { return }
         inferredTitle = suggestion
         refreshDisplayTitle()
         await withErrorReporting {
@@ -151,9 +158,8 @@ public final class NoteWindowModel: Identifiable {
         saveTask?.cancel()
         saveTask = nil
         guard isDirty else { return }
-        isDirty = false
         let (id, body, now) = (noteID, body, now)
-        withErrorReporting {
+        let saved = withErrorReporting {
             try database.write { db in
                 try Note.find(id).update {
                     $0.body = body
@@ -161,7 +167,10 @@ public final class NoteWindowModel: Identifiable {
                 }
                 .execute(db)
             }
-        }
+            return true
+        } ?? false
+        guard saved else { return }
+        savedBody = body
         onNoteChanged()
     }
 
@@ -172,15 +181,16 @@ public final class NoteWindowModel: Identifiable {
             noteDeletedElsewhere(noteID, fallbackTheme: fallbackTheme)
             return
         }
-        theme = note.theme
+        if note.theme != theme { theme = note.theme }
         customTitle = note.title
         inferredTitle = note.inferredTitle
+        Task { await refreshNeighbors() }
         guard !isDirty, note.body != body else {
             refreshDisplayTitle()
-            Task { await refreshNeighbors() }
             return
         }
         body = note.body
+        savedBody = note.body
         refreshDisplayTitle()
         direction = .none
         revision += 1
@@ -288,7 +298,7 @@ public final class NoteWindowModel: Identifiable {
     public func newNoteButtonTapped(theme: NoteTheme) {
         let note = Note(id: Note.ID(uuid()), style: theme.style, tint: theme.tint, appearance: theme.appearance, createdAt: now, updatedAt: now)
         guard insert(note) else { return }
-        show(note, direction: .forward, recordsHistory: true)
+        show(note, direction: .forward)
     }
 
     public func duplicateButtonTapped() {
@@ -305,14 +315,13 @@ public final class NoteWindowModel: Identifiable {
             updatedAt: now
         )
         guard insert(note) else { return }
-        show(note, direction: .forward, recordsHistory: true)
+        show(note, direction: .forward)
     }
 
     /// Returns false when no note is left to show, so the window can close.
     @discardableResult
     public func deleteButtonTapped(fallbackTheme: NoteTheme) -> Bool {
         saveTask?.cancel()
-        isDirty = false
         let deleted = noteID
         let neighbor = fetchNeighbor(.forward) ?? fetchNeighbor(.backward)
         withErrorReporting {
@@ -320,95 +329,79 @@ public final class NoteWindowModel: Identifiable {
                 try Note.find(deleted).delete().execute(db)
             }
         }
-        backStack.removeAll { $0 == deleted }
-        forwardStack.removeAll { $0 == deleted }
+        body = ""
+        savedBody = ""
         onNoteDeleted(deleted)
         if let neighbor {
-            show(neighbor, direction: .forward, recordsHistory: false)
+            show(neighbor, direction: .forward)
         } else {
             let note = Note(id: Note.ID(uuid()), style: fallbackTheme.style, tint: fallbackTheme.tint, appearance: fallbackTheme.appearance, createdAt: now, updatedAt: now)
             guard insert(note) else { return false }
-            show(note, direction: .forward, recordsHistory: false)
+            show(note, direction: .forward)
         }
         return true
     }
 
     public func noteSelected(_ id: Note.ID) {
         guard id != noteID, let note = fetch(id) else { return }
-        show(note, direction: .forward, recordsHistory: true)
-    }
-
-    public func backButtonTapped() {
-        while let id = backStack.popLast() {
-            guard let note = fetch(id) else { continue }
-            forwardStack.append(noteID)
-            show(note, direction: .backward, recordsHistory: false)
-            return
-        }
-    }
-
-    public func forwardButtonTapped() {
-        while let id = forwardStack.popLast() {
-            guard let note = fetch(id) else { continue }
-            backStack.append(noteID)
-            show(note, direction: .forward, recordsHistory: false)
-            return
-        }
+        show(note, direction: .forward)
     }
 
     /// Swiping and ⌥⌘← → walk the notes newest to oldest.
     public func previousNoteRequested() {
         guard let note = fetchNeighbor(.backward) else { return }
-        show(note, direction: .backward, recordsHistory: true)
+        show(note, direction: .backward)
     }
 
     public func nextNoteRequested() {
         guard let note = fetchNeighbor(.forward) else { return }
-        show(note, direction: .forward, recordsHistory: true)
+        show(note, direction: .forward)
     }
 
     /// Another window deleted the note this one shows.
     public func noteDeletedElsewhere(_ id: Note.ID, fallbackTheme: NoteTheme) {
-        backStack.removeAll { $0 == id }
-        forwardStack.removeAll { $0 == id }
         guard id == noteID else { return }
-        isDirty = false
         saveTask?.cancel()
+        body = ""
+        savedBody = ""
         if let neighbor = fetchNeighbor(.forward) ?? fetchNeighbor(.backward) {
-            show(neighbor, direction: .forward, recordsHistory: false)
+            show(neighbor, direction: .forward)
         } else {
             newNoteButtonTapped(theme: fallbackTheme)
         }
     }
 
     public func refreshNeighbors() async {
-        let (createdAt, excluded) = (createdAt, otherOpenNoteIDs().union([noteID]))
+        let (id, createdAt, excluded) = (noteID, createdAt, otherOpenNoteIDs().union([noteID]))
         let result = await withErrorReporting {
             try await database.read { db in
-                let newer = try Note.where { $0.createdAt > createdAt && !$0.id.in(excluded) }.fetchCount(db)
-                let older = try Note.where { $0.createdAt < createdAt && !$0.id.in(excluded) }.fetchCount(db)
+                let newer = try Note.where { Self.isNewer($0, than: createdAt, id) && !$0.id.in(excluded) }.fetchCount(db)
+                let older = try Note.where { Self.isOlder($0, than: createdAt, id) && !$0.id.in(excluded) }.fetchCount(db)
                 return (newer > 0, older > 0)
             }
         }
-        guard let (newer, older) = result else { return }
+        guard let (newer, older) = result, id == noteID else { return }
         hasPrevious = newer
         hasNext = older
     }
 
-    private func show(_ note: Note, direction: NavigationDirection, recordsHistory: Bool) {
+    /// Notes are ordered by when they were made, then by id, so notes made in the
+    /// same instant (an import) are each still reachable.
+    private nonisolated static func isNewer(_ note: Note.TableColumns, than createdAt: Date, _ id: Note.ID) -> some QueryExpression<Bool> {
+        #sql("(\(note.createdAt) > \(bind: createdAt) OR (\(note.createdAt) = \(bind: createdAt) AND \(note.id) > \(bind: id)))", as: Bool.self)
+    }
+
+    private nonisolated static func isOlder(_ note: Note.TableColumns, than createdAt: Date, _ id: Note.ID) -> some QueryExpression<Bool> {
+        #sql("(\(note.createdAt) < \(bind: createdAt) OR (\(note.createdAt) = \(bind: createdAt) AND \(note.id) < \(bind: id)))", as: Bool.self)
+    }
+
+    private func show(_ note: Note, direction: NavigationDirection) {
         flush()
         let leaving = noteID
-        let discardsLeaving = isEmpty && leaving != note.id
-        if recordsHistory, !discardsLeaving, leaving != note.id {
-            backStack.append(leaving)
-            forwardStack.removeAll()
-        }
-        if discardsLeaving {
+        if isEmpty, leaving != note.id, !otherOpenNoteIDs().contains(leaving) {
             withErrorReporting {
                 try database.write { db in try Note.find(leaving).delete().execute(db) }
             }
-            backStack.removeAll { $0 == leaving }
-            forwardStack.removeAll { $0 == leaving }
         }
         noteID = note.id
         theme = note.theme
@@ -416,8 +409,10 @@ public final class NoteWindowModel: Identifiable {
         inferredTitle = note.inferredTitle
         displayTitle = note.displayTitle
         body = note.body
+        savedBody = note.body
         createdAt = note.createdAt
-        inferredFrom = ""
+        inferredFrom = note.inferredTitle.isEmpty ? "" : Self.inferenceKey(note.body)
+        titleGeneration += 1
         self.direction = direction
         revision += 1
         Task { await refreshNeighbors() }
@@ -439,18 +434,18 @@ public final class NoteWindowModel: Identifiable {
     }
 
     private func fetchNeighbor(_ direction: NavigationDirection) -> Note? {
-        let (createdAt, excluded) = (createdAt, otherOpenNoteIDs().union([noteID]))
+        let (id, createdAt, excluded) = (noteID, createdAt, otherOpenNoteIDs().union([noteID]))
         return withErrorReporting {
             try database.read { db in
                 switch direction {
                 case .backward:
-                    try Note.where { $0.createdAt > createdAt && !$0.id.in(excluded) }
-                        .order { $0.createdAt.asc() }
+                    try Note.where { Self.isNewer($0, than: createdAt, id) && !$0.id.in(excluded) }
+                        .order { ($0.createdAt.asc(), $0.id.asc()) }
                         .limit(1)
                         .fetchOne(db)
                 case .forward, .none:
-                    try Note.where { $0.createdAt < createdAt && !$0.id.in(excluded) }
-                        .order { $0.createdAt.desc() }
+                    try Note.where { Self.isOlder($0, than: createdAt, id) && !$0.id.in(excluded) }
+                        .order { ($0.createdAt.desc(), $0.id.desc()) }
                         .limit(1)
                         .fetchOne(db)
                 }

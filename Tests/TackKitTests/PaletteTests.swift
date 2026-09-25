@@ -15,9 +15,10 @@ struct PaletteTests {
         #expect(palette.highlighted == "item:newNote")
         palette.moveHighlight(-1)
         #expect(palette.highlighted == "item:settings")
-        palette.queryChanged("go")
-        #expect(palette.rows.map(\.id).prefix(2) == ["item:goBack", "item:goForward"])
-        #expect(palette.highlighted != "item:goBack")
+        palette.queryChanged("note")
+        #expect(palette.rows.contains { $0.id == "item:previousNote" })
+        #expect(palette.highlighted != "item:previousNote")
+        #expect(palette.highlighted != "item:nextNote")
     }
 
     @Test func prefixMatchesRankFirst() {

@@ -90,7 +90,7 @@ public final class AppModel {
     public func windowClosed(_ windowID: UUID) {
         guard let window = windows.remove(id: windowID) else { return }
         window.flush()
-        if window.isEmpty {
+        if window.isEmpty, self.window(showing: window.noteID) == nil {
             let id = window.noteID
             withErrorReporting {
                 try database.write { db in try Note.find(id).delete().execute(db) }

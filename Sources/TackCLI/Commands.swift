@@ -27,11 +27,9 @@ struct Search: ParsableCommand {
     @OptionGroup var output: JSONFlag
 
     func run() throws {
-        let store = NoteStore()
-        let hits = try store.search(words.joined(separator: " "), limit: limit)
-        let notes = try hits.map { try store.resolve($0.id.rawValue.uuidString) }
-        if output.json { return try Output.json(notes.map { NoteJSON($0, includesBody: false) }) }
-        for (note, hit) in zip(notes, hits) {
+        let results = try NoteStore().search(words.joined(separator: " "), limit: limit)
+        if output.json { return try Output.json(results.map { NoteJSON($0.0, includesBody: false) }) }
+        for (note, hit) in results {
             print(Output.row(note))
             let snippet = hit.snippet.split(whereSeparator: \.isNewline).joined(separator: " ")
             if !snippet.isEmpty { print("          \(snippet)") }
@@ -66,7 +64,9 @@ struct Add: ParsableCommand {
     @OptionGroup var output: JSONFlag
 
     func run() throws {
-        let body = text.isEmpty ? (Output.standardInput() ?? "") : text.joined(separator: " ")
+        guard let body = text.isEmpty ? Output.standardInput() : text.joined(separator: " ") else {
+            throw ValidationError("Give the note's Markdown as arguments or pipe it in.")
+        }
         @SharedReader(.defaultStyle) var defaultStyle
         @SharedReader(.defaultTint) var defaultTint
         @SharedReader(.defaultAppearance) var defaultAppearance
@@ -95,14 +95,19 @@ struct Edit: ParsableCommand {
     func run() throws {
         let store = NoteStore()
         let note = try store.resolve(note)
-        var text = body ?? ((append ?? prepend) == nil ? Output.standardInput()?.trimmingTrailingNewline : nil) ?? note.body
-        if let append { text = text.isEmpty ? append : text + "\n" + append }
-        if let prepend { text = text.isEmpty ? prepend : prepend + "\n" + text }
-        var theme = note.theme
-        if let style { theme.style = style }
-        if let tint { theme.tint = tint }
-        if let appearance { theme.appearance = appearance }
-        let updated = try store.update(note, body: text, title: title, theme: theme)
+        // Piped text replaces the body only when nothing else was asked for, so a
+        // script that changes the tint cannot blank a note by accident.
+        let asksForSomethingElse = append != nil || prepend != nil || title != nil || style != nil || tint != nil || appearance != nil
+        let piped = body == nil && !asksForSomethingElse ? Output.standardInput()?.trimmingTrailingNewline : nil
+        let updated = try store.modify(note.id) { current in
+            if let replacement = body ?? piped { current.body = replacement }
+            if let append { current.body = current.body.isEmpty ? append : current.body + "\n" + append }
+            if let prepend { current.body = current.body.isEmpty ? prepend : prepend + "\n" + current.body }
+            if let title { current.title = title }
+            if let style { current.style = style }
+            if let tint { current.tint = tint }
+            if let appearance { current.appearance = appearance }
+        }
         if output.json { return try Output.json(NoteJSON(updated, includesBody: true)) }
         print(Output.row(updated))
     }
@@ -139,8 +144,10 @@ struct Uncheck: ParsableCommand {
 private func setTask(_ reference: String, _ number: Int, done: Bool) throws {
     let store = NoteStore()
     let note = try store.resolve(reference)
-    try store.update(note, body: NoteStore.setting(task: number, done: done, in: note.body))
-    let task = NoteStore.tasks(in: try store.resolve(note.id.rawValue.uuidString).body)[number - 1]
+    let updated = try store.modify(note.id) { current in
+        current.body = try NoteStore.setting(task: number, done: done, in: current.body)
+    }
+    let task = NoteStore.tasks(in: updated.body)[number - 1]
     print("\(task.number). [\(task.isDone ? "x" : " ")] \(task.text)")
 }
 
@@ -157,7 +164,10 @@ struct Delete: ParsableCommand {
                 throw ValidationError("Pass --force to delete without a terminal.")
             }
             print("Delete “\(note.displayTitle)”? [y/N] ", terminator: "")
-            guard readLine()?.lowercased().hasPrefix("y") == true else { return }
+            guard readLine()?.lowercased().hasPrefix("y") == true else {
+                print("Kept it.")
+                return
+            }
         }
         try store.delete(note)
         print("Deleted \(Output.row(note))")

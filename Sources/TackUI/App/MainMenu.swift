@@ -64,11 +64,6 @@ enum MainMenu {
         menu.addItem(item("Close", #selector(NSWindow.performClose(_:)), "w"))
         menu.addItem(.separator())
         menu.addItem(item("Copy Note As…", #selector(NoteWindowController.showCopyAsPalette(_:)), "c", [.command, .shift]))
-        let copyAs = NSMenu(title: "Copy As")
-        for (index, format) in CopyFormat.allCases.enumerated() {
-            copyAs.addItem(item(format.title, #selector(NoteWindowController.copyNoteAs(_:)), tag: index))
-        }
-        menu.addItem(submenu(copyAs))
         menu.addItem(item("Export…", #selector(NoteWindowController.exportNote(_:)), "e", [.command, .shift]))
         menu.addItem(.separator())
         menu.addItem(item("Delete Note…", #selector(NoteWindowController.deleteNote(_:))))
@@ -126,7 +121,7 @@ enum MainMenu {
         menu.addItem(item("Bulleted List", #selector(NoteTextView.toggleBulletList(_:)), "8", [.command, .shift]))
         menu.addItem(item("Numbered List", #selector(NoteTextView.toggleNumberedList(_:)), "7", [.command, .shift]))
         menu.addItem(item("Checklist", #selector(NoteTextView.toggleChecklist(_:)), "l", [.command, .shift]))
-        menu.addItem(item("Check or Uncheck", #selector(NoteTextView.toggleCheckbox(_:)), "u", [.command, .shift]))
+        menu.addItem(item("Toggle Checkbox", #selector(NoteTextView.toggleCheckbox(_:)), "u", [.command, .shift]))
         menu.addItem(item("Quote", #selector(NoteTextView.toggleQuote(_:)), "'"))
         menu.addItem(item("Code Block", #selector(NoteTextView.insertCodeBlock(_:)), "c", [.command, .option, .shift]))
         menu.addItem(item("Divider", #selector(NoteTextView.insertDivider(_:))))
@@ -142,8 +137,6 @@ enum MainMenu {
         menu.addItem(.separator())
         menu.addItem(item("Previous Note", #selector(NoteWindowController.previousNote(_:)), String(UnicodeScalar(NSLeftArrowFunctionKey)!), [.command, .option]))
         menu.addItem(item("Next Note", #selector(NoteWindowController.nextNote(_:)), String(UnicodeScalar(NSRightArrowFunctionKey)!), [.command, .option]))
-        menu.addItem(item("Go Back", #selector(NoteWindowController.goBack(_:)), "["))
-        menu.addItem(item("Go Forward", #selector(NoteWindowController.goForward(_:)), "]"))
         menu.addItem(.separator())
         menu.addItem(item("Pin on Top", #selector(NoteWindowController.togglePin(_:)), "p", [.command, .shift]))
         menu.addItem(item("Focus Mode", #selector(NoteWindowController.toggleFocusMode(_:)), "\r"))
@@ -178,7 +171,6 @@ enum MainMenu {
         menu.addItem(item("Minimize", #selector(NSWindow.performMiniaturize(_:)), "m"))
         menu.addItem(.separator())
         menu.addItem(item("Show All Notes", #selector(AppDelegate.showAllNotes(_:))))
-        menu.addItem(item("Bring All to Front", #selector(NSApplication.arrangeInFront(_:))))
         return menu
     }
 }

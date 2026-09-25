@@ -31,5 +31,12 @@ struct SearchBenchmarks {
             _ = try await database.read { db in try NoteSearch.recent(limit: 40).fetchAll(db) }
         }
         print("BENCH recent 40 of 5000: \(recent)")
+        let id = try await database.read { db in try Note.limit(1).fetchOne(db)!.id }
+        let saves = try await clock.measure {
+            for index in 0..<100 {
+                try await database.write { db in try Note.find(id).update { $0.body = "edited \(index) plan milk" }.execute(db) }
+            }
+        }
+        print("BENCH save among 5000: \(saves / 100)")
     }
 }

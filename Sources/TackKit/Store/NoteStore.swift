@@ -34,14 +34,22 @@ public struct NoteStore {
         try database.read { db in try Note.order { $0.updatedAt.desc() }.limit(limit).fetchAll(db) }
     }
 
-    public func search(_ query: String, limit: Int = 40) throws -> [NoteHit] {
-        try database.read { db in try NoteSearch.hits(matching: query, limit: limit).fetchAll(db) }
+    /// Notes in the order search ranked them. A query with no words finds nothing.
+    public func search(_ query: String, limit: Int = 40) throws -> [(Note, NoteHit)] {
+        guard NoteSearch.ftsQuery(query) != nil else { return [] }
+        return try database.read { db in
+            let hits = try NoteSearch.hits(matching: query, limit: limit).fetchAll(db)
+            let notes = try Note.where { $0.id.in(hits.map(\.id)) }.fetchAll(db)
+            let byID = Dictionary(uniqueKeysWithValues: notes.map { ($0.id, $0) })
+            return hits.compactMap { hit in byID[hit.id].map { ($0, hit) } }
+        }
     }
 
     /// A full id, a unique id prefix, or a title (exact first, then a unique substring).
     public func resolve(_ reference: String) throws -> Note {
+        let lowered = reference.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !lowered.isEmpty else { throw Failure.notFound(reference) }
         let notes = try all(limit: 100_000)
-        let lowered = reference.lowercased()
         if let exact = notes.first(where: { $0.id.rawValue.uuidString.lowercased() == lowered }) { return exact }
         let byID = notes.filter { $0.id.rawValue.uuidString.lowercased().hasPrefix(lowered) }
         if lowered.count >= 4, byID.count == 1 { return byID[0] }
@@ -49,8 +57,8 @@ public struct NoteStore {
         if byTitle.count == 1 { return byTitle[0] }
         let partial = notes.filter { $0.displayTitle.lowercased().contains(lowered) }
         if partial.count == 1 { return partial[0] }
-        let candidates = byTitle.count > 1 ? byTitle : (partial.isEmpty ? byID : partial)
-        guard candidates.isEmpty else { throw Failure.ambiguous(reference, candidates.prefix(5).map(\.displayTitle)) }
+        let candidates = byTitle.count > 1 ? byTitle : (partial.isEmpty && lowered.count >= 4 ? byID : partial)
+        guard candidates.count < 2 else { throw Failure.ambiguous(reference, candidates.prefix(5).map(\.displayTitle)) }
         throw Failure.notFound(reference)
     }
 
@@ -62,16 +70,29 @@ public struct NoteStore {
         return note
     }
 
+    /// Reads, changes and writes the note in one transaction, so a save from the app
+    /// between the read and the write is not lost.
     @discardableResult
-    public func update(_ note: Note, body: String? = nil, title: String? = nil, theme: NoteTheme? = nil) throws -> Note {
-        var updated = note
-        if let body { updated.body = body }
-        if let title { updated.title = title }
-        if let theme { updated.theme = theme }
-        updated.updatedAt = now
-        try database.write { db in try Note.update(updated).execute(db) }
+    public func modify(_ id: Note.ID, _ change: (inout Note) throws -> Void) throws -> Note {
+        let now = now
+        let updated = try database.write { db in
+            guard var note = try Note.find(id).fetchOne(db) else { throw Failure.notFound(id.rawValue.uuidString) }
+            try change(&note)
+            note.updatedAt = now
+            try Note.update(note).execute(db)
+            return note
+        }
         NoteChangeSignal.post()
         return updated
+    }
+
+    @discardableResult
+    public func update(_ note: Note, body: String? = nil, title: String? = nil, theme: NoteTheme? = nil) throws -> Note {
+        try modify(note.id) { current in
+            if let body { current.body = body }
+            if let title { current.title = title }
+            if let theme { current.theme = theme }
+        }
     }
 
     public func delete(_ note: Note) throws {

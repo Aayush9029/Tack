@@ -172,10 +172,6 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             model.duplicateButtonTapped()
         case .browse:
             model.browseButtonTapped()
-        case .goBack:
-            model.backButtonTapped()
-        case .goForward:
-            model.forwardButtonTapped()
         case .previousNote:
             model.previousNoteRequested()
         case .nextNote:
@@ -285,18 +281,11 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     @objc func showCopyAsPalette(_ sender: Any?) { model.copyAsButtonTapped() }
     @objc func exportNote(_ sender: Any?) { perform(.export) }
     @objc func deleteNote(_ sender: Any?) { perform(.delete) }
-    @objc func goBack(_ sender: Any?) { perform(.goBack) }
-    @objc func goForward(_ sender: Any?) { perform(.goForward) }
     @objc func previousNote(_ sender: Any?) { perform(.previousNote) }
     @objc func nextNote(_ sender: Any?) { perform(.nextNote) }
     @objc func togglePin(_ sender: Any?) { perform(.togglePin) }
     @objc func toggleFocusMode(_ sender: Any?) { perform(.toggleFocus) }
     @objc func renameNote(_ sender: Any?) { perform(.rename) }
-
-    @objc func copyNoteAs(_ sender: NSMenuItem) {
-        guard CopyFormat.allCases.indices.contains(sender.tag) else { return }
-        perform(.copyAs(CopyFormat.allCases[sender.tag]))
-    }
 
     @objc func setNoteStyle(_ sender: NSMenuItem) {
         guard NoteStyle.allCases.indices.contains(sender.tag) else { return }
@@ -326,8 +315,6 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         switch menuItem.action {
-        case #selector(goBack(_:)): return model.canGoBack
-        case #selector(goForward(_:)): return model.canGoForward
         case #selector(previousNote(_:)): return model.hasPrevious
         case #selector(nextNote(_:)): return model.hasNext
         case #selector(togglePin(_:)):

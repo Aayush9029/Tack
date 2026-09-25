@@ -34,7 +34,7 @@ struct NoteWindowModelTests {
         #expect(stored?.body == "# Plan\n- [ ] call")
     }
 
-    @Test func swipeOrderAndHistory() async throws {
+    @Test func swipeOrder() async throws {
         let old = try insert(1, "old", createdAt: 1)
         let middle = try insert(2, "middle", createdAt: 2)
         _ = try insert(3, "new", createdAt: 3)
@@ -46,12 +46,37 @@ struct NoteWindowModelTests {
         model.nextNoteRequested()
         #expect(model.noteID == old.id)
         #expect(model.direction == .forward)
-        model.backButtonTapped()
+        model.previousNoteRequested()
         #expect(model.noteID == middle.id)
-        #expect(model.canGoForward)
+        #expect(model.direction == .backward)
         model.previousNoteRequested()
         #expect(model.displayTitle == "new")
-        #expect(!model.canGoForward)
+    }
+
+    @Test func notesMadeInTheSameInstantAreAllReachable() async throws {
+        let notes = try (1...3).map { try insert($0, "note \($0)", createdAt: 5) }
+        let model = NoteWindowModel(id: UUID(), note: notes[2])
+        var seen = [model.noteID]
+        for _ in 0..<2 {
+            model.nextNoteRequested()
+            seen.append(model.noteID)
+        }
+        #expect(Set(seen) == Set(notes.map(\.id)))
+    }
+
+    @Test func outsideChangeNeverOverwritesUnsavedTyping() async throws {
+        let note = try insert(1, "stored", createdAt: 1)
+        let model = NoteWindowModel(id: UUID(), note: note)
+        model.textChanged("typed")
+        try await database.write { db in try Note.find(note.id).update { $0.body = "from the cli" }.execute(db) }
+        model.reloadFromStore()
+        #expect(model.body == "typed")
+        await model.save()
+        let stored = try await database.read { db in try Note.find(note.id).fetchOne(db) }
+        #expect(stored?.body == "typed")
+        try await database.write { db in try Note.find(note.id).update { $0.body = "cli again" }.execute(db) }
+        model.reloadFromStore()
+        #expect(model.body == "cli again")
     }
 
     @Test func leavingAnEmptyNoteDeletesIt() async throws {
@@ -60,7 +85,7 @@ struct NoteWindowModelTests {
         model.newNoteButtonTapped(theme: NoteTheme(style: .classic, tint: .pink))
         let empty = model.noteID
         #expect(model.theme.style == .classic)
-        model.backButtonTapped()
+        model.nextNoteRequested()
         #expect(model.noteID == kept.id)
         let count = try await database.read { db in try Note.where { $0.id.eq(empty) }.fetchCount(db) }
         #expect(count == 0)

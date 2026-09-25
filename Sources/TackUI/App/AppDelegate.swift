@@ -113,6 +113,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValid
 
     // MARK: Actions
 
+    /// ⌘N when no note has the keyboard; a note window handles it itself otherwise.
     @objc func newNote(_ sender: Any?) {
         newNoteInWindow(sender)
     }

@@ -7,8 +7,6 @@ public enum NoteCommand: Hashable, Sendable {
     case newWindow
     case duplicate
     case browse
-    case goBack
-    case goForward
     case previousNote
     case nextNote
     case find
