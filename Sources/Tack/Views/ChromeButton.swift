@@ -13,7 +13,7 @@ struct ChromeButton: View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 12.5, weight: .semibold))
-                .foregroundStyle(isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(isHovering ? .primary : .secondary))
+                .foregroundStyle(isOn || isHovering ? .primary : .secondary)
                 .frame(width: Metrics.controlSize, height: Metrics.controlSize)
                 .contentShape(.circle)
         }
