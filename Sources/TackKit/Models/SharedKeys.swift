@@ -29,6 +29,7 @@ public extension SharedReaderKey where Self == AppStorageKey<Bool>.Default {
     static var checksSpelling: Self { Self[.appStorage("checksSpelling"), default: true] }
     static var showsDockIcon: Self { Self[.appStorage("showsDockIcon"), default: true] }
     static var showsMenuBarIcon: Self { Self[.appStorage("showsMenuBarIcon"), default: true] }
+    static var infersTitles: Self { Self[.appStorage("infersTitles"), default: true] }
     static var pinsNewNotes: Self { Self[.appStorage("pinsNewNotes"), default: false] }
     static var hasSeededWelcomeNote: Self { Self[.appStorage("hasSeededWelcomeNote"), default: false] }
 }

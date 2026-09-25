@@ -1,0 +1,50 @@
+import Dependencies
+import DependenciesMacros
+import Foundation
+import FoundationModels
+
+/// Names a note from its text with the on-device model. Returns nil when Apple
+/// Intelligence is off, still downloading, or the note is not in a supported language.
+@DependencyClient
+public struct TitleClient: Sendable {
+    public var suggest: @Sendable (_ body: String) async throws -> String?
+}
+
+extension TitleClient: DependencyKey {
+    public static let liveValue = TitleClient { body in
+        let model = SystemLanguageModel.default
+        guard case .available = model.availability, model.supportsLocale(Locale.current) else { return nil }
+        let session = LanguageModelSession(
+            model: model,
+            instructions: "You name sticky notes. Give a short title that says what the note is about."
+        )
+        let response = try await session.respond(
+            to: Prompt { "Note:\n\(body)" },
+            generating: SuggestedTitle.self,
+            options: GenerationOptions(samplingMode: .greedy, maximumResponseTokens: 32)
+        )
+        return clean(response.content.title)
+    }
+
+    public static let testValue = TitleClient()
+
+    static func clean(_ title: String) -> String? {
+        let cleaned = title
+            .trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: "\"'“”‘’.#*")))
+        guard !cleaned.isEmpty else { return nil }
+        return String(cleaned.prefix(48))
+    }
+}
+
+@Generable
+struct SuggestedTitle {
+    @Guide(description: "Two to five words, in title case, with no quotes and no final period.")
+    var title: String
+}
+
+public extension DependencyValues {
+    var titleClient: TitleClient {
+        get { self[TitleClient.self] }
+        set { self[TitleClient.self] = newValue }
+    }
+}

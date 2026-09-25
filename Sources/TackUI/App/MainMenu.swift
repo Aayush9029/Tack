@@ -71,7 +71,7 @@ enum MainMenu {
         menu.addItem(submenu(copyAs))
         menu.addItem(item("Export…", #selector(NoteWindowController.exportNote(_:)), "e", [.command, .shift]))
         menu.addItem(.separator())
-        menu.addItem(item("Delete Note", #selector(NoteWindowController.deleteNote(_:)), "\u{8}"))
+        menu.addItem(item("Delete Note…", #selector(NoteWindowController.deleteNote(_:))))
         return menu
     }
 

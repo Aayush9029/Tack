@@ -23,7 +23,6 @@ struct ShortcutsPane: View {
                 LabeledContent("Focus mode", value: "⌘ ↩")
                 LabeledContent("Copy as", value: "⇧ ⌘ C")
                 LabeledContent("Export", value: "⇧ ⌘ E")
-                LabeledContent("Delete note", value: "⌘ ⌫")
             }
 
             Section("Markdown") {

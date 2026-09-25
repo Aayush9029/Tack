@@ -8,6 +8,7 @@ final class WindowState {
     var isKey = false
     var swipeOffset: CGFloat = 0
     var swipeEdge: SwipeEdge?
+    var swipeFlash: SwipeEdge?
 }
 
 enum SwipeEdge: Equatable {

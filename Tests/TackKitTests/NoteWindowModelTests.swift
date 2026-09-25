@@ -76,6 +76,19 @@ struct NoteWindowModelTests {
         #expect(remaining == 1)
     }
 
+    @Test(.dependencies { $0.titleClient.suggest = { _ in "Rate Limit Fixes" } })
+    func longFirstLineGetsAnInferredTitle() async throws {
+        let note = try insert(1, "", createdAt: 1)
+        let model = NoteWindowModel(id: UUID(), note: note)
+        model.textChanged("fix 1, 3 (do 200) and also increase rate limits for that specific endpoint by a lot")
+        await model.save()
+        #expect(model.displayTitle == "Rate Limit Fixes")
+        let stored = try await database.read { db in try Note.find(note.id).fetchOne(db) }
+        #expect(stored?.inferredTitle == "Rate Limit Fixes")
+        model.textChanged("# Heading wins\nfix 1, 3 (do 200) and also increase rate limits")
+        #expect(model.displayTitle == "Heading wins")
+    }
+
     @Test func renameOverridesTheDerivedTitle() async throws {
         let note = try insert(1, "derived", createdAt: 1)
         let model = NoteWindowModel(id: UUID(), note: note)

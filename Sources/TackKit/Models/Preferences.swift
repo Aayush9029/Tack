@@ -16,6 +16,7 @@ public final class Preferences {
     @ObservationIgnored @Shared(.showsDockIcon) public var showsDockIcon: Bool
     @ObservationIgnored @Shared(.showsMenuBarIcon) public var showsMenuBarIcon: Bool
     @ObservationIgnored @Shared(.pinsNewNotes) public var pinsNewNotes: Bool
+    @ObservationIgnored @Shared(.infersTitles) public var infersTitles: Bool
 
     public init() {}
 

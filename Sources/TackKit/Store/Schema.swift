@@ -89,6 +89,15 @@ public extension DependencyValues {
             .execute(db)
         }
 
+        migrator.registerMigration("Inferred titles") { db in
+            try #sql(
+                """
+                ALTER TABLE "notes" ADD COLUMN "inferredTitle" TEXT NOT NULL DEFAULT ''
+                """
+            )
+            .execute(db)
+        }
+
         try migrator.migrate(database)
     }
 }

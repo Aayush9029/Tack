@@ -27,7 +27,7 @@ struct NoteRootView: View {
         }
         .background { NoteBackground(theme: model.theme, isFocusMode: model.isFocusMode) }
         .overlay(alignment: .topLeading) {
-            TrafficLights(isKey: window.isKey, close: actions.close, minimize: actions.minimize, focus: actions.toggleFocusMode)
+            CloseButton(isKey: window.isKey, close: actions.close)
                 .frame(height: Metrics.titleBarHeight)
                 .padding(.leading, 14)
                 .opacity(showsChrome ? 1 : 0)
@@ -47,7 +47,7 @@ struct NoteRootView: View {
             .opacity(showsChrome ? 1 : 0)
             .allowsHitTesting(showsChrome)
         }
-        .overlay(alignment: .top) {
+        .overlay(alignment: .bottom) {
             if showsFocusHint {
                 Text("Press ⌘↩ or Esc to leave focus mode")
                     .font(.system(size: 12, weight: .medium))
@@ -55,11 +55,14 @@ struct NoteRootView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
                     .glassEffect(.regular, in: .capsule)
-                    .padding(.top, 24)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .padding(.bottom, 32)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
-        .overlay { SwipeEdgeHint(edge: window.swipeEdge, offset: window.swipeOffset) }
+        .overlay {
+            SwipeGlow(offset: window.swipeOffset, isAllowed: window.swipeEdge != nil, flash: window.swipeFlash)
+                .clipShape(.rect(cornerRadius: model.isFocusMode ? 0 : Metrics.windowRadius, style: .continuous))
+        }
         .onHover { isHovering = $0 }
         .animation(.easeOut(duration: 0.16), value: showsChrome)
         .animation(.smooth(duration: 0.35), value: model.isFocusMode)

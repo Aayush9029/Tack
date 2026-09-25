@@ -26,7 +26,7 @@ public enum PaletteCatalog {
             PaletteItem(.toggleFocus, context.isFocusMode ? "Exit Focus Mode" : "Focus Mode", symbol: context.isFocusMode ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right", shortcut: ["⌘", "↩"], keywords: ["full screen", "writer", "zen"], group: 3),
             PaletteItem(.page(.theme), "Change Look…", symbol: "paintpalette", keywords: ["theme", "style", "tint", "color", "glass", "classic", "dark", "light"], group: 3),
             PaletteItem(.rename, "Rename Note…", symbol: "character.cursor.ibeam", keywords: ["title"], group: 4),
-            PaletteItem(.delete, "Delete Note", symbol: "trash", shortcut: ["⌘", "⌫"], keywords: ["remove"], group: 4),
+            PaletteItem(.delete, "Delete Note…", symbol: "trash", keywords: ["remove"], group: 4),
             PaletteItem(.settings, "Settings…", symbol: "gearshape", shortcut: ["⌘", ","], keywords: ["preferences"], group: 4),
         ]
     }

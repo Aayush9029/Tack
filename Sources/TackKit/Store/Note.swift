@@ -10,6 +10,8 @@ public struct Note: Identifiable, Equatable, Sendable {
     /// Set only by Rename. Empty means the first line of the body names the note.
     public var title = ""
     public var body = ""
+    /// Named by the on-device model when the first line makes a poor title.
+    public var inferredTitle = ""
     public var style = NoteStyle.glass
     public var tint = NoteTint.none
     public var appearance = NoteAppearance.system
@@ -20,6 +22,7 @@ public struct Note: Identifiable, Equatable, Sendable {
         id: ID,
         title: String = "",
         body: String = "",
+        inferredTitle: String = "",
         style: NoteStyle = .glass,
         tint: NoteTint = .none,
         appearance: NoteAppearance = .system,
@@ -29,6 +32,7 @@ public struct Note: Identifiable, Equatable, Sendable {
         self.id = id
         self.title = title
         self.body = body
+        self.inferredTitle = inferredTitle
         self.style = style
         self.tint = tint
         self.appearance = appearance
@@ -46,6 +50,6 @@ public struct Note: Identifiable, Equatable, Sendable {
     }
 
     public var displayTitle: String {
-        title.isEmpty ? NoteText.title(from: body) : title
+        NoteText.displayTitle(custom: title, body: body, inferred: inferredTitle)
     }
 }

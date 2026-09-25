@@ -52,6 +52,21 @@ public final class AppModel {
         return window
     }
 
+    /// Settings' look applies to every note, and becomes the look of new ones.
+    public func lookChanged(style: NoteStyle? = nil, tint: NoteTint? = nil, appearance: NoteAppearance? = nil) {
+        if let style { preferences.$defaultStyle.withLock { $0 = style } }
+        if let tint { preferences.$defaultTint.withLock { $0 = tint } }
+        if let appearance { preferences.$defaultAppearance.withLock { $0 = appearance } }
+        withErrorReporting {
+            try database.write { db in
+                if let style { try Note.update { $0.style = style }.execute(db) }
+                if let tint { try Note.update { $0.tint = tint }.execute(db) }
+                if let appearance { try Note.update { $0.appearance = appearance }.execute(db) }
+            }
+        }
+        windows.forEach { $0.reloadFromStore() }
+    }
+
     public func window(showing noteID: Note.ID) -> NoteWindowModel? {
         windows.first { $0.noteID == noteID }
     }

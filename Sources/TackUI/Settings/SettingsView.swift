@@ -42,7 +42,7 @@ struct SettingsView: View {
     private var pane: some View {
         switch currentTab {
         case .general: GeneralPane(preferences: app.preferences)
-        case .notes: NotesPane(preferences: app.preferences)
+        case .notes: NotesPane(app: app)
         case .editor: EditorPane(preferences: app.preferences)
         case .shortcuts: ShortcutsPane()
         case .about: AboutPane()

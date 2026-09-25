@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ToggleCard<Illustration: View>: View {
     let title: String
-    let description: String
+    var description: String?
     var icon: String?
     let isOn: Bool
     var aspectRatio: CGFloat = 2
@@ -43,7 +43,9 @@ struct ToggleCard<Illustration: View>: View {
                                 lineWidth: isOn ? 3 : 1
                             )
                     }
-                    .overlay(alignment: .topLeading) { infoButton }
+                    .overlay(alignment: .topLeading) {
+                        if description != nil { infoButton }
+                    }
                     .shadow(color: .black.opacity(0.25), radius: isHovering ? 9 : 5, y: isHovering ? 5 : 3)
             }
             .buttonStyle(.plain)
@@ -56,7 +58,7 @@ struct ToggleCard<Illustration: View>: View {
         .animation(.easeOut(duration: 0.15), value: isHovering)
         .onHover { isHovering = $0 }
         .popover(isPresented: $isShowingDescription, arrowEdge: .bottom) {
-            Text(description)
+            Text(description ?? "")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(10)

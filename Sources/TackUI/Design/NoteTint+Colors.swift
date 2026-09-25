@@ -17,36 +17,29 @@ extension NoteTint {
         }
     }
 
-    /// Classic without a tint is the yellow note everyone pictures.
+    /// Classic is paper in either appearance, and without a tint it is the yellow note
+    /// everyone pictures.
     private var classic: NoteTint { self == .none ? .yellow : self }
 
     var classicBody: NSColor {
-        NSColor(name: "tack.classic.body.\(rawValue)") { appearance in
-            guard !appearance.isDark else { return NSColor(srgbRed: 0.15, green: 0.15, blue: 0.16, alpha: 1) }
-            return switch classic {
-            case .yellow, .none: NSColor(srgbRed: 1.0, green: 0.969, blue: 0.82, alpha: 1)
-            case .green: NSColor(srgbRed: 0.894, green: 0.976, blue: 0.878, alpha: 1)
-            case .pink: NSColor(srgbRed: 1.0, green: 0.894, blue: 0.945, alpha: 1)
-            case .purple: NSColor(srgbRed: 0.949, green: 0.902, blue: 1.0, alpha: 1)
-            case .blue: NSColor(srgbRed: 0.886, green: 0.945, blue: 1.0, alpha: 1)
-            case .gray: NSColor(srgbRed: 0.953, green: 0.949, blue: 0.945, alpha: 1)
-            }
+        switch classic {
+        case .yellow, .none: NSColor(srgbRed: 1.0, green: 0.969, blue: 0.82, alpha: 1)
+        case .green: NSColor(srgbRed: 0.894, green: 0.976, blue: 0.878, alpha: 1)
+        case .pink: NSColor(srgbRed: 1.0, green: 0.894, blue: 0.945, alpha: 1)
+        case .purple: NSColor(srgbRed: 0.949, green: 0.902, blue: 1.0, alpha: 1)
+        case .blue: NSColor(srgbRed: 0.886, green: 0.945, blue: 1.0, alpha: 1)
+        case .gray: NSColor(srgbRed: 0.953, green: 0.949, blue: 0.945, alpha: 1)
         }
     }
 
     var classicHeader: NSColor {
-        NSColor(name: "tack.classic.header.\(rawValue)") { appearance in
-            if appearance.isDark {
-                return (classic.accent ?? .systemYellow).withAlphaComponent(0.85)
-            }
-            return switch classic {
-            case .yellow, .none: NSColor(srgbRed: 1.0, green: 0.945, blue: 0.64, alpha: 1)
-            case .green: NSColor(srgbRed: 0.79, green: 0.94, blue: 0.76, alpha: 1)
-            case .pink: NSColor(srgbRed: 1.0, green: 0.80, blue: 0.898, alpha: 1)
-            case .purple: NSColor(srgbRed: 0.906, green: 0.812, blue: 1.0, alpha: 1)
-            case .blue: NSColor(srgbRed: 0.804, green: 0.914, blue: 1.0, alpha: 1)
-            case .gray: NSColor(srgbRed: 0.878, green: 0.878, blue: 0.878, alpha: 1)
-            }
+        switch classic {
+        case .yellow, .none: NSColor(srgbRed: 1.0, green: 0.945, blue: 0.64, alpha: 1)
+        case .green: NSColor(srgbRed: 0.79, green: 0.94, blue: 0.76, alpha: 1)
+        case .pink: NSColor(srgbRed: 1.0, green: 0.80, blue: 0.898, alpha: 1)
+        case .purple: NSColor(srgbRed: 0.906, green: 0.812, blue: 1.0, alpha: 1)
+        case .blue: NSColor(srgbRed: 0.804, green: 0.914, blue: 1.0, alpha: 1)
+        case .gray: NSColor(srgbRed: 0.878, green: 0.878, blue: 0.878, alpha: 1)
         }
     }
 

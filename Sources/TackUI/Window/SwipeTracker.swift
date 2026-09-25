@@ -54,8 +54,16 @@ final class SwipeTracker {
             state.swipeEdge = nil
             var transaction = Transaction()
             transaction.disablesAnimations = true
-            withTransaction(transaction) { state.swipeOffset = 0 }
+            withTransaction(transaction) {
+                state.swipeOffset = 0
+                state.swipeFlash = direction == .previous ? .previous : .next
+            }
             onCommit(direction)
+            let state = state
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(60))
+                withAnimation(.easeOut(duration: 0.5)) { state.swipeFlash = nil }
+            }
         case .springBack:
             withAnimation(.spring(duration: 0.35, bounce: 0.2)) {
                 state.swipeOffset = 0

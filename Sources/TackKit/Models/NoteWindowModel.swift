@@ -4,6 +4,7 @@ import Dependencies
 import Foundation
 import IssueReporting
 import Observation
+import Sharing
 import SQLiteData
 
 @DebugSnapshot
@@ -14,12 +15,15 @@ public final class NoteWindowModel: Identifiable {
     @ObservationIgnored @Dependency(\.continuousClock) private var clock
     @ObservationIgnored @Dependency(\.date.now) private var now
     @ObservationIgnored @Dependency(\.uuid) private var uuid
+    @ObservationIgnored @Dependency(\.titleClient) private var titleClient
+    @ObservationIgnored @Shared(.infersTitles) private var infersTitles
 
     public nonisolated let id: UUID
     public private(set) var noteID: Note.ID
     public private(set) var theme: NoteTheme
     public private(set) var customTitle: String
     public private(set) var displayTitle: String
+    public private(set) var inferredTitle: String
     /// Bumped whenever the editor must reload the body from the model.
     public private(set) var revision = 0
     public private(set) var direction = NavigationDirection.none
@@ -38,6 +42,8 @@ public final class NoteWindowModel: Identifiable {
     @ObservationIgnored private var createdAt: Date
     @ObservationIgnored private var isDirty = false
     @ObservationIgnored private var saveTask: Task<Void, Never>?
+    /// The start of the body the inferred title was made from, so it is only redone when that changes.
+    @ObservationIgnored private var inferredFrom = ""
 
     @ObservationIgnored public var otherOpenNoteIDs: () -> Set<Note.ID> = { [] }
     @ObservationIgnored public var onNoteDeleted: (Note.ID) -> Void = { _ in }
@@ -49,6 +55,7 @@ public final class NoteWindowModel: Identifiable {
         theme = note.theme
         customTitle = note.title
         displayTitle = note.displayTitle
+        inferredTitle = note.inferredTitle
         body = note.body
         createdAt = note.createdAt
         self.isPinned = isPinned
@@ -82,10 +89,7 @@ public final class NoteWindowModel: Identifiable {
 
     public func textChanged(_ text: String) {
         body = text
-        if customTitle.isEmpty {
-            let title = NoteText.title(from: text)
-            if title != displayTitle { displayTitle = title }
-        }
+        refreshDisplayTitle()
         isDirty = true
         saveTask?.cancel()
         saveTask = Task { [weak self, clock] in
@@ -108,6 +112,33 @@ public final class NoteWindowModel: Identifiable {
             }
         }
         onNoteChanged()
+        await inferTitleIfNeeded()
+    }
+
+    private func refreshDisplayTitle() {
+        let title = NoteText.displayTitle(custom: customTitle, body: body, inferred: inferredTitle)
+        if title != displayTitle { displayTitle = title }
+    }
+
+    /// Asks the on-device model for a title once typing has paused, and only when
+    /// the first line would make a poor one and has changed since the last ask.
+    public func inferTitleIfNeeded() async {
+        guard infersTitles, customTitle.isEmpty, NoteText.wantsInferredTitle(body) else { return }
+        let sample = String(body.prefix(1200))
+        let key = String(sample.prefix(160))
+        guard key != inferredFrom, sample.trimmingCharacters(in: .whitespacesAndNewlines).count >= 12 else { return }
+        inferredFrom = key
+        let id = noteID
+        let suggestion = await withErrorReporting { try await titleClient.suggest(sample) } ?? nil
+        guard let suggestion, id == noteID, suggestion != inferredTitle else { return }
+        inferredTitle = suggestion
+        refreshDisplayTitle()
+        await withErrorReporting {
+            try await database.write { db in
+                try Note.find(id).update { $0.inferredTitle = suggestion }.execute(db)
+            }
+        }
+        onNoteChanged()
     }
 
     /// Writes pending text now: before switching notes, closing, or quitting.
@@ -127,6 +158,23 @@ public final class NoteWindowModel: Identifiable {
             }
         }
         onNoteChanged()
+    }
+
+    /// Picks up a change made outside this window: Settings, the command line, another app.
+    /// Unsaved typing wins over the store.
+    public func reloadFromStore() {
+        guard let note = fetch(noteID) else { return }
+        theme = note.theme
+        customTitle = note.title
+        inferredTitle = note.inferredTitle
+        guard !isDirty, note.body != body else {
+            refreshDisplayTitle()
+            return
+        }
+        body = note.body
+        refreshDisplayTitle()
+        direction = .none
+        revision += 1
     }
 
     // MARK: Look
@@ -168,11 +216,11 @@ public final class NoteWindowModel: Identifiable {
     public func renameCommitted(_ title: String) {
         isRenaming = false
         let title = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let derived = NoteText.title(from: body)
+        let derived = NoteText.displayTitle(custom: "", body: body, inferred: inferredTitle)
         let custom = title == derived ? "" : title
         guard custom != customTitle else { return }
         customTitle = custom
-        displayTitle = custom.isEmpty ? derived : custom
+        refreshDisplayTitle()
         let id = noteID
         withErrorReporting {
             try database.write { db in
@@ -240,6 +288,7 @@ public final class NoteWindowModel: Identifiable {
             id: Note.ID(uuid()),
             title: customTitle,
             body: body,
+            inferredTitle: inferredTitle,
             style: theme.style,
             tint: theme.tint,
             appearance: theme.appearance,
@@ -355,9 +404,11 @@ public final class NoteWindowModel: Identifiable {
         noteID = note.id
         theme = note.theme
         customTitle = note.title
+        inferredTitle = note.inferredTitle
         displayTitle = note.displayTitle
         body = note.body
         createdAt = note.createdAt
+        inferredFrom = ""
         self.direction = direction
         revision += 1
         Task { await refreshNeighbors() }

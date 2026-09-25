@@ -2,7 +2,5 @@
 @MainActor
 struct NoteWindowActions {
     var close: () -> Void
-    var minimize: () -> Void
-    var toggleFocusMode: () -> Void
     var escape: () -> Void
 }

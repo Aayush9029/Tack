@@ -29,6 +29,9 @@ struct EditorPane: View {
 
             Section("Writing") {
                 Toggle("Check spelling while typing", isOn: Binding(preferences.$checksSpelling))
+                Toggle("Suggest titles", isOn: Binding(preferences.$infersTitles))
+                Text("When a note starts with a long line or a list, Apple Intelligence names it on this Mac. A heading or a short first line is always the title.")
+                    .settingFootnote()
             }
         }
     }
@@ -38,7 +41,6 @@ struct EditorPane: View {
             ForEach(EditorFont.allCases) { font in
                 ToggleCard(
                     title: font.title,
-                    description: font.description,
                     isOn: selection == font,
                     aspectRatio: 1.5,
                     action: { choose(font) }

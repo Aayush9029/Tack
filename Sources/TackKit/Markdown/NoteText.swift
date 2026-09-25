@@ -4,6 +4,24 @@ import Foundation
 public enum NoteText {
     public static let untitled = "New Note"
 
+    /// A heading or a short first line names the note. A long first line or a list
+    /// makes a poor title, so a title inferred from the whole note is used instead.
+    public static func displayTitle(custom: String, body: some StringProtocol, inferred: String) -> String {
+        if !custom.isEmpty { return custom }
+        if wantsInferredTitle(body), !inferred.isEmpty { return inferred }
+        return title(from: body)
+    }
+
+    public static func wantsInferredTitle(_ body: some StringProtocol) -> Bool {
+        guard let line = body.split(separator: "\n", maxSplits: 12, omittingEmptySubsequences: true)
+            .first(where: { !strip($0).isEmpty })
+        else { return false }
+        let trimmed = line.drop { $0 == " " || $0 == "\t" }
+        if trimmed.hasPrefix("#") { return false }
+        let isList = MarkdownParser.parse(String(trimmed), startsInCode: false).block.prefixLength > 0
+        return isList || strip(line).count > 40
+    }
+
     public static func title(from body: some StringProtocol) -> String {
         for line in body.split(separator: "\n", maxSplits: 12, omittingEmptySubsequences: true) {
             let text = strip(line)

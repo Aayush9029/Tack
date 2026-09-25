@@ -43,7 +43,7 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
         let proxy = self.proxy
         let state = self.state
-        var actions = NoteWindowActions(close: {}, minimize: {}, toggleFocusMode: {}, escape: {})
+        var actions = NoteWindowActions(close: {}, escape: {})
         let hosting = NSHostingView(rootView: AnyView(EmptyView()))
         // The window sizes the content. Without this the hosting view re-derives its
         // minimum, maximum and intrinsic sizes on every update.
@@ -54,8 +54,6 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
         actions = NoteWindowActions(
             close: { [weak window] in window?.performClose(nil) },
-            minimize: { [weak window] in window?.miniaturize(nil) },
-            toggleFocusMode: { [weak model] in model?.focusModeToggled() },
             escape: { [weak self] in self?.escapePressed() }
         )
         hosting.rootView = AnyView(
@@ -112,11 +110,13 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     private func applyTheme(_ theme: NoteTheme) {
         guard let window else { return }
-        window.appearance = switch theme.appearance {
+        let appearance: NSAppearance? = switch theme.appearance {
         case .system: nil
         case .light: NSAppearance(named: .aqua)
         case .dark: NSAppearance(named: .darkAqua)
         }
+        // Classic is paper, so its ink is always dark.
+        window.appearance = theme.style == .classic ? NSAppearance(named: .aqua) : appearance
         glass.style = theme.style == .clear ? .clear : .regular
         glass.tintColor = theme.style == .classic ? nil : theme.tint.accent?.withAlphaComponent(theme.style == .clear ? 0.22 : 0.32)
         window.invalidateShadow()

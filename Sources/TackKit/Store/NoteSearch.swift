@@ -33,7 +33,7 @@ public enum NoteSearch {
               LIMIT \(bind: matchLimit)
             )
             SELECT
-              n."id", n."title", substr(n."body", 1, 300), m."snippet", n."tint",
+              n."id", n."title", n."inferredTitle", substr(n."body", 1, 300), m."snippet", n."tint",
               \(raw: taskCount("[x]")) + \(raw: taskCount("[X]")),
               \(raw: taskCount("[ ]")),
               n."updatedAt"
@@ -50,7 +50,7 @@ public enum NoteSearch {
         #sql(
             """
             SELECT
-              n."id", n."title", substr(n."body", 1, 300), '', n."tint",
+              n."id", n."title", n."inferredTitle", substr(n."body", 1, 300), '', n."tint",
               \(raw: taskCount("[x]")) + \(raw: taskCount("[X]")),
               \(raw: taskCount("[ ]")),
               n."updatedAt"
