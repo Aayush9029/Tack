@@ -37,12 +37,16 @@ let package = Package(
                 .product(name: "Markdown", package: "swift-markdown"),
             ]
         ),
-        .executableTarget(
-            name: "Tack",
+        .target(
+            name: "TackUI",
             dependencies: [
                 "TackKit",
                 .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
             ]
+        ),
+        .executableTarget(
+            name: "Tack",
+            dependencies: ["TackKit", "TackUI"]
         ),
         .testTarget(
             name: "TackKitTests",
@@ -52,6 +56,10 @@ let package = Package(
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "DebugSnapshots", package: "swift-debug-snapshots"),
             ]
+        ),
+        .testTarget(
+            name: "TackUITests",
+            dependencies: ["TackUI", "TackKit"]
         ),
     ],
     swiftLanguageModes: [.v6]

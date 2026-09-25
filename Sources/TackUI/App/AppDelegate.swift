@@ -4,14 +4,18 @@ import SwiftUI
 import TackKit
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
+public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     let app = AppModel()
+
+    override public init() {
+        super.init()
+    }
     private var controllers: [UUID: NoteWindowController] = [:]
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var observers: [Task<Void, Never>] = []
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    public func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = MainMenu.build()
         setUpStatusItem()
         observe { [app] in app.preferences.showsDockIcon } apply: { showsDock in
@@ -37,15 +41,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         }
     }
 
-    func applicationWillTerminate(_ notification: Notification) {
+    public func applicationWillTerminate(_ notification: Notification) {
         app.applicationWillTerminate()
     }
 
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+    public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
     }
 
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+    public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
         if !hasVisibleWindows { showAllNotes(nil) }
         return true
     }
@@ -172,7 +176,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         NSApp.activate()
     }
 
-    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+    public func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         true
     }
 

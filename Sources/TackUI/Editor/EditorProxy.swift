@@ -15,9 +15,7 @@ final class EditorProxy {
     /// After the window finishes resizing, lay the text out for its final size.
     func settleLayout() {
         guard let textView else { return }
-        textView.layoutForMode()
-        if textView.isFocusMode, textView.isTypewriter { textView.centerCaret(animated: false) }
-        textView.updateCaret()
+        textView.setNeedsRefresh([.layout, .focus, .center])
     }
 
     func showFind() {

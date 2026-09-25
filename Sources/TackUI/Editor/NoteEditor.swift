@@ -30,6 +30,7 @@ struct NoteEditor: NSViewRepresentable {
         textView.delegate = coordinator
         textView.textStorage?.delegate = coordinator.styler
         textView.onEscape = onEscape
+        textView.onRestyle = { [weak coordinator] storage in coordinator?.styler.restylePending(in: storage) }
         textView.onColumnWidthChange = { [weak coordinator] width in coordinator?.columnWidthChanged(width) }
         proxy.textView = textView
         coordinator.apply(configuration)
@@ -73,8 +74,7 @@ struct NoteEditor: NSViewRepresentable {
             textView.undoManager?.removeAllActions()
             textView.setSelectedRange(NSRange(location: (model.body as NSString).length, length: 0))
             textView.enclosingScrollView?.contentView.scroll(to: .zero)
-            textView.updateFocusedParagraph(force: true)
-            if textView.isFocusMode, textView.isTypewriter { textView.centerCaret(animated: false) }
+            textView.setNeedsRefresh([.layout, .focus, .center])
         }
 
         func apply(_ configuration: EditorConfiguration) {
@@ -87,7 +87,7 @@ struct NoteEditor: NSViewRepresentable {
             let size = configuration.pointSize
             guard !styler.theme.matches(family: family, size: size, isFocusMode: configuration.isFocusMode) || previous == nil else {
                 textView.dimsParagraphs = configuration.dimsParagraphs
-                textView.layoutForMode()
+                textView.setNeedsRefresh(.layout)
                 return
             }
             let theme = EditorTheme(family: family, size: size, isFocusMode: configuration.isFocusMode)
@@ -98,13 +98,8 @@ struct NoteEditor: NSViewRepresentable {
             textView.typingAttributes = styler.baseAttributes
             textView.isFocusMode = configuration.isFocusMode
             textView.dimsParagraphs = configuration.dimsParagraphs
-            textView.layoutForMode()
             styler.styleAll(storage)
-            textView.updateFocusedParagraph(force: true)
-            textView.updateCaret()
-            if configuration.isFocusMode, configuration.isTypewriter {
-                textView.centerCaret(animated: false)
-            }
+            textView.setNeedsRefresh([.layout, .focus, .center])
         }
 
         func columnWidthChanged(_ width: CGFloat) {
@@ -119,8 +114,7 @@ struct NoteEditor: NSViewRepresentable {
         }
 
         func textDidChange(_ notification: Notification) {
-            guard let textView, let storage = textView.textStorage else { return }
-            styler.restylePending(in: storage)
+            guard let textView else { return }
             model.textChanged(textView.string)
         }
 

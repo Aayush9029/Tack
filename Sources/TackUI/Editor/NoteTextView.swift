@@ -9,15 +9,57 @@ final class NoteTextView: NSTextView {
     var quickLookURL: URL?
 
     var isFocusMode = false {
-        didSet { if oldValue != isFocusMode { layoutForMode() } }
+        didSet { if oldValue != isFocusMode { setNeedsRefresh([.layout, .focus, .center]) } }
     }
     var isTypewriter = true
     var dimsParagraphs = true {
-        didSet { if oldValue != dimsParagraphs { updateFocusedParagraph(force: true) } }
+        didSet { if oldValue != dimsParagraphs { setNeedsRefresh(.focus) } }
     }
     var hang: CGFloat = 0
     var onEscape: () -> Void = {}
+    var onRestyle: (NSTextStorage) -> Void = { _ in }
     var onColumnWidthChange: (CGFloat) -> Void = { _ in }
+
+    /// Work that resizes, relays out or scrolls. It waits for the end of the current
+    /// event, because doing it inside an edit or a layout pass re-enters AppKit's
+    /// layout and throws.
+    struct Refresh: OptionSet {
+        let rawValue: Int
+        static let layout = Refresh(rawValue: 1 << 0)
+        static let focus = Refresh(rawValue: 1 << 1)
+        static let caret = Refresh(rawValue: 1 << 2)
+        static let center = Refresh(rawValue: 1 << 3)
+        static let animatedCenter = Refresh(rawValue: 1 << 4)
+        static let style = Refresh(rawValue: 1 << 5)
+    }
+
+    private var pendingRefresh: Refresh = []
+    private var focusedAtLastRefresh: NSRange?
+
+    func setNeedsRefresh(_ refresh: Refresh) {
+        let isScheduled = !pendingRefresh.isEmpty
+        pendingRefresh.formUnion(refresh)
+        guard !isScheduled else { return }
+        DispatchQueue.main.async { [weak self] in
+            MainActor.assumeIsolated { self?.performRefresh() }
+        }
+    }
+
+    private func performRefresh() {
+        let refresh = pendingRefresh
+        pendingRefresh = []
+        // Styled after the edit settles, with the selection held: an attribute-only
+        // edit makes TextKit 2 remap the insertion point through the restyled range.
+        if refresh.contains(.style), let textStorage {
+            preservingSelection { onRestyle(textStorage) }
+        }
+        if refresh.contains(.layout) { layoutForMode() }
+        if refresh.contains(.focus) { updateFocusedParagraph(force: refresh.contains(.layout)) }
+        if isFocusMode, isTypewriter, !refresh.isDisjoint(with: [.center, .animatedCenter]) {
+            centerCaret(animated: refresh.contains(.animatedCenter) && !refresh.contains(.layout))
+        }
+        updateCaret()
+    }
 
     static func make() -> NoteTextView {
         let textView = NoteTextView(usingTextLayoutManager: true)
@@ -69,11 +111,11 @@ final class NoteTextView: NSTextView {
     }
 
     @objc private func viewportDidResize(_ notification: Notification) {
-        layoutForMode()
-        guard isFocusMode, isTypewriter else { return }
-        centerCaret(animated: false)
+        setNeedsRefresh([.layout, .center])
     }
 
+    /// Insets for the mode: the note's margins, or a centred column with room above
+    /// and below for the caret line to sit in the middle of the screen.
     func layoutForMode() {
         guard let scrollView = enclosingScrollView else { return }
         let viewport = scrollView.contentView.bounds.size
@@ -87,44 +129,41 @@ final class NoteTextView: NSTextView {
             inset = NSSize(width: 20, height: 6)
         }
         if textContainerInset != inset, let manager = textLayoutManager {
-            textContainerInset = inset
-            // TextKit 2 leaves laid-out fragments where the old inset put them.
-            manager.invalidateLayout(for: manager.documentRange)
-            manager.textViewportLayoutController.layoutViewport()
+            preservingSelection {
+                textContainerInset = inset
+                // TextKit 2 leaves laid-out fragments where the old inset put them.
+                manager.invalidateLayout(for: manager.documentRange)
+                manager.textViewportLayoutController.layoutViewport()
+            }
         }
         onColumnWidthChange(max(120, viewport.width - inset.width * 2 - hang))
-        updateCaret()
     }
 
     // MARK: Caret
 
     override func setSelectedRanges(_ ranges: [NSValue], affinity: NSSelectionAffinity, stillSelecting: Bool) {
         super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelecting)
-        updateCaret()
-        updateFocusedParagraph()
-        if !stillSelecting, isFocusMode, isTypewriter { centerCaret(animated: true) }
+        setNeedsRefresh(stillSelecting ? [.caret, .focus] : [.caret, .focus, .animatedCenter])
     }
 
     override func didChangeText() {
         super.didChangeText()
-        updateCaret()
-        updateFocusedParagraph()
-        if isFocusMode, isTypewriter { centerCaret(animated: false) }
+        setNeedsRefresh([.style, .caret, .focus, .center])
     }
 
     override func becomeFirstResponder() -> Bool {
-        defer { updateCaret() }
+        defer { setNeedsRefresh(.caret) }
         return super.becomeFirstResponder()
     }
 
     override func resignFirstResponder() -> Bool {
-        defer { updateCaret() }
+        defer { setNeedsRefresh(.caret) }
         return super.resignFirstResponder()
     }
 
     @objc private func windowKeyChanged(_ notification: Notification) {
         guard notification.object as? NSWindow === window else { return }
-        updateCaret()
+        setNeedsRefresh(.caret)
     }
 
     override func drawInsertionPoint(in rect: NSRect, color: NSColor, turnedOn flag: Bool) {}
@@ -139,11 +178,13 @@ final class NoteTextView: NSTextView {
         caret.place(at: rect)
     }
 
+    /// Focus mode's caret is a little wider and taller, like iA Writer's.
     func caretRect() -> CGRect? {
         guard let manager = textLayoutManager else { return nil }
         let offset = selectedRange().location
         let font = (typingAttributes[.font] as? NSFont) ?? self.font ?? .systemFont(ofSize: 15)
-        let height = (font.ascender - font.descender + 3).rounded()
+        let width: CGFloat = isFocusMode ? 3 : 2
+        let height = (font.ascender - font.descender + (isFocusMode ? 6 : 3)).rounded()
         guard let location = manager.location(manager.documentRange.location, offsetBy: offset) else { return nil }
         var segment: CGRect?
         manager.enumerateTextSegments(in: NSTextRange(location: location), type: .standard, options: [.rangeNotRequired]) { _, frame, _, _ in
@@ -152,31 +193,23 @@ final class NoteTextView: NSTextView {
         }
         let origin = textContainerOrigin
         guard let frame = segment, frame.height > 0 else {
-            return CGRect(x: origin.x + hang - 1, y: origin.y, width: 2, height: height)
+            return CGRect(x: origin.x + hang - 1, y: origin.y, width: width, height: height)
         }
         let y = frame.maxY - height - max(0, (frame.height - height) * 0.12)
-        return CGRect(x: (origin.x + frame.minX - 1).rounded(), y: (origin.y + y).rounded(), width: 2, height: height)
+        return CGRect(x: (origin.x + frame.minX - width / 2).rounded(), y: (origin.y + y).rounded(), width: width, height: height)
     }
 
     /// Typewriter scrolling: the line being written stays at the middle of the screen.
     func centerCaret(animated: Bool) {
-        guard let manager = textLayoutManager, let scrollView = enclosingScrollView else { return }
-        // The view's own height lags an inset change, so the content height comes from TextKit.
-        manager.ensureLayout(for: manager.documentRange)
-        let contentHeight = manager.usageBoundsForTextContainer.height + textContainerInset.height * 2
-        if frame.height < contentHeight {
-            setFrameSize(NSSize(width: frame.width, height: contentHeight))
-        }
-        guard let rect = caretRect() else { return }
+        guard let rect = caretRect(), let scrollView = enclosingScrollView else { return }
         let clip = scrollView.contentView
-        let maxY = max(0, max(frame.height, contentHeight) - clip.bounds.height)
-        let target = NSPoint(x: clip.bounds.origin.x, y: min(max(0, (rect.midY - clip.bounds.height / 2).rounded()), maxY))
+        let target = NSPoint(x: clip.bounds.origin.x, y: max(0, (rect.midY - clip.bounds.height / 2).rounded()))
         guard abs(target.y - clip.bounds.origin.y) > 0.5 else { return }
         if animated {
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = 0.18
                 context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-                clip.animator().setBoundsOrigin(target)
+                clip.animator().setBoundsOrigin(clip.constrainBoundsRect(NSRect(origin: target, size: clip.bounds.size)).origin)
             } completionHandler: {
                 MainActor.assumeIsolated { scrollView.reflectScrolledClipView(clip) }
             }
@@ -188,7 +221,7 @@ final class NoteTextView: NSTextView {
 
     override func scrollRangeToVisible(_ range: NSRange) {
         if isFocusMode, isTypewriter {
-            centerCaret(animated: false)
+            setNeedsRefresh(.center)
         } else {
             super.scrollRangeToVisible(range)
         }
@@ -200,23 +233,32 @@ final class NoteTextView: NSTextView {
         let focused: NSRange? = isFocusMode && dimsParagraphs
             ? (string as NSString).paragraphRange(for: NSRange(location: selectedRange().location, length: 0))
             : nil
-        guard force || focused != fragmentContext.focusedParagraph else { return }
         let previous = fragmentContext.focusedParagraph
         fragmentContext.focusedParagraph = focused
+        // Typing changes the paragraph's length, not which paragraph is bright.
+        guard force || focused?.location != previous?.location || (focused == nil) != (previous == nil) else { return }
         guard let manager = textLayoutManager else { return }
-        if force || previous == nil || focused == nil {
-            manager.invalidateLayout(for: manager.documentRange)
-        } else {
-            for range in [previous, focused].compactMap({ $0 }) { invalidate(range) }
+        preservingSelection {
+            if force || previous == nil || focused == nil {
+                manager.invalidateLayout(for: manager.documentRange)
+            } else {
+                for range in [previous, focused].compactMap({ $0 }) { invalidate(range) }
+            }
+            manager.textViewportLayoutController.layoutViewport()
         }
-        manager.textViewportLayoutController.layoutViewport()
-        needsDisplay = true
+    }
+
+    /// Invalidating TextKit 2 layout can move the selection; nothing here should.
+    private func preservingSelection(_ work: () -> Void) {
+        let selection = selectedRanges
+        work()
+        if selectedRanges != selection { selectedRanges = selection }
     }
 
     private func invalidate(_ range: NSRange) {
         guard let manager = textLayoutManager,
-              let start = manager.location(manager.documentRange.location, offsetBy: range.location),
-              let end = manager.location(start, offsetBy: max(range.length, 0)),
+              let start = manager.location(manager.documentRange.location, offsetBy: min(range.location, (string as NSString).length)),
+              let end = manager.location(start, offsetBy: max(0, min(range.length, (string as NSString).length - range.location))),
               let textRange = NSTextRange(location: start, end: end)
         else { return }
         manager.invalidateLayout(for: textRange)

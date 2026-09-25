@@ -43,7 +43,8 @@ final class EditorTheme {
         let key = FontKey(bold: bold, italic: italic, scale: scale, code: false)
         if let font = fonts[key] { return font }
         let pointSize = (size * scale).rounded()
-        let font: NSFont
+        let upright = NSFont.systemFont(ofSize: pointSize, weight: bold ? .semibold : .regular)
+        var font = italic ? Self.italic(upright) : upright
         if let prefix = family.postScriptPrefix {
             let face = switch (bold, italic) {
             case (true, true): "BoldItalic"
@@ -51,10 +52,7 @@ final class EditorTheme {
             case (false, true): "Italic"
             case (false, false): "Regular"
             }
-            font = NSFont(name: "\(prefix)-\(face)", size: pointSize) ?? .systemFont(ofSize: pointSize)
-        } else {
-            let upright = NSFont.systemFont(ofSize: pointSize, weight: bold ? .semibold : .regular)
-            font = italic ? Self.italic(upright) : upright
+            font = NSFont(name: "\(prefix)-\(face)", size: pointSize) ?? font
         }
         fonts[key] = font
         return font

@@ -24,7 +24,7 @@ public enum MarkdownParser {
 
         let indent = indentEnd
         if let level = headingLevel(line, from: indentEnd) {
-            let marker = NSRange(location: 0, length: indentEnd + level + 1)
+            let marker = NSRange(location: 0, length: min(indentEnd + level + 1, length))
             var spans = inlineSpans(line, from: NSMaxRange(marker))
             spans.insert(MarkdownSpan(.syntax, marker), at: 0)
             return MarkdownParagraph(block: .heading(level: level, marker: marker), spans: spans)

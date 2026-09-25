@@ -9,6 +9,29 @@ import Testing
         #expect(paragraph.block == .heading(level: 2, marker: NSRange(location: 0, length: 3)))
     }
 
+    @Test func loneHashStaysInsideTheLine() {
+        let paragraph = MarkdownParser.parse("#", startsInCode: false)
+        #expect(paragraph.block == .heading(level: 1, marker: NSRange(location: 0, length: 1)))
+        #expect(paragraph.spans.allSatisfy { NSMaxRange($0.range) <= 1 })
+    }
+
+    @Test func everyRangeStaysInsideTheLine() {
+        let lines = ["#", "##", "- ", "-", "- [", "- [ ]", "- [x]", "1.", "1. ", ">", "> ", "```", "~~", "**", "*a", "[a](", "![](", "---", " ", "\t- [ ] x"]
+        for line in lines {
+            let paragraph = MarkdownParser.parse(line, startsInCode: false)
+            let length = (line as NSString).length
+            #expect(paragraph.spans.allSatisfy { NSMaxRange($0.range) <= length }, "\(line)")
+            switch paragraph.block {
+            case let .heading(_, marker), let .bullet(_, marker), let .ordered(_, marker), let .quote(marker):
+                #expect(NSMaxRange(marker) <= length, "\(line)")
+            case let .task(_, _, marker, box):
+                #expect(NSMaxRange(marker) <= length && NSMaxRange(box) <= length, "\(line)")
+            default:
+                break
+            }
+        }
+    }
+
     @Test func hashWithoutSpaceIsNotAHeading() {
         #expect(MarkdownParser.parse("#tag", startsInCode: false).block == .body)
     }
