@@ -194,8 +194,8 @@ private enum Patterns {
     static let bold = regex(#"(\*\*|__)(?=\S)(.+?)(?<=\S)\1"#)
     static let strike = regex(#"~~(?=\S)(.+?)(?<=\S)~~"#)
     static let highlight = regex(#"==(?=\S)(.+?)(?<=\S)=="#)
-    static let italicStar = regex(#"(?<![*\\])\*(?![*\s])(.+?)(?<![\s*\\])\*(?!\*)"#)
-    static let italicUnderscore = regex(#"(?<![\w_])_(?![_\s])(.+?)(?<![\s_])_(?![\w_])"#)
+    static let italicStar = regex(#"(?<![*\\])\*(?![*\s])([^*\n]+?)(?<![\s*\\])\*(?!\*)"#)
+    static let italicUnderscore = regex(#"(?<![\w_])_(?![_\s])([^_\n]+?)(?<![\s_])_(?![\w_])"#)
 
     private static func regex(_ pattern: String) -> NSRegularExpression {
         // A literal pattern that fails to compile is a programmer error caught by the tests.

@@ -133,7 +133,8 @@ final class EditorTheme {
     nonisolated static let codeBackground = NSColor(name: "tack.code") { appearance in
         appearance.isDark ? NSColor(white: 1, alpha: 0.07) : NSColor(white: 0, alpha: 0.05)
     }
-    nonisolated static let highlight = NSColor(srgbRed: 1.0, green: 0.84, blue: 0.2, alpha: 0.35)
+    /// Orange, so a highlight still shows on yellow paper.
+    nonisolated static let highlight = NSColor(srgbRed: 1.0, green: 0.62, blue: 0.1, alpha: 0.38)
     nonisolated static let selection = NSColor(srgbRed: 0.0, green: 0.6, blue: 1.0, alpha: 0.24)
 }
 

@@ -11,7 +11,8 @@ final class FragmentContext: @unchecked Sendable {
         guard let focusedParagraph, let manager = textLayoutManager else { return false }
         let start = manager.offset(from: manager.documentRange.location, to: range.location)
         let end = manager.offset(from: manager.documentRange.location, to: range.endLocation)
-        return NSIntersectionRange(focusedParagraph, NSRange(location: start, length: max(end - start, 1))).length == 0
-            && !(focusedParagraph.length == 0 && focusedParagraph.location >= start && focusedParagraph.location <= end)
+        let span = NSRange(location: start, length: max(end - start, 1))
+        return NSIntersectionRange(focusedParagraph, span).length == 0
+            && !(focusedParagraph.length == 0 && NSLocationInRange(focusedParagraph.location, span))
     }
 }

@@ -19,12 +19,22 @@ final class MediaCache {
         var aspect: CGFloat { pixelSize.height > 0 ? pixelSize.width / pixelSize.height : 4.0 / 3.0 }
     }
 
-    private var media: [URL: Media] = [:]
+    /// Decoded thumbnails, up to about 200 MB; the rest decode again when shown.
+    private let media: NSCache<NSURL, Box> = {
+        let cache = NSCache<NSURL, Box>()
+        cache.totalCostLimit = 200 * 1024 * 1024
+        return cache
+    }()
+
+    private final class Box {
+        let media: Media
+        init(_ media: Media) { self.media = media }
+    }
     private var failed: Set<URL> = []
     private var loading: Set<URL> = []
 
     func cached(_ url: URL) -> Media? {
-        media[url]
+        media.object(forKey: url as NSURL)?.media
     }
 
     func hasFailed(_ url: URL) -> Bool {
@@ -32,13 +42,13 @@ final class MediaCache {
     }
 
     func load(_ url: URL) {
-        guard media[url] == nil, !failed.contains(url), !loading.contains(url) else { return }
+        guard cached(url) == nil, !failed.contains(url), !loading.contains(url) else { return }
         loading.insert(url)
         Task {
             let result = await Self.decode(url)
             loading.remove(url)
             if let result {
-                media[url] = result
+                media.setObject(Box(result), forKey: url as NSURL, cost: result.image.bytesPerRow * result.image.height)
             } else {
                 failed.insert(url)
                 Log.editor.notice("Could not load media at \(url.path(percentEncoded: false), privacy: .private)")

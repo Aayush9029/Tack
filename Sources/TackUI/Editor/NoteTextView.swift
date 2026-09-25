@@ -54,7 +54,7 @@ final class NoteTextView: NSTextView {
             preservingSelection { onRestyle(textStorage) }
         }
         if refresh.contains(.layout) { layoutForMode() }
-        if refresh.contains(.focus) { updateFocusedParagraph(force: refresh.contains(.layout)) }
+        if refresh.contains(.focus) { updateFocusedParagraph(force: refresh.contains(.layout) && isFocusMode && dimsParagraphs) }
         if isFocusMode, isTypewriter, !refresh.isDisjoint(with: [.center, .animatedCenter]) {
             centerCaret(animated: refresh.contains(.animatedCenter) && !refresh.contains(.layout))
         }

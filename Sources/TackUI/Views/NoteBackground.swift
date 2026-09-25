@@ -29,7 +29,12 @@ struct NoteBackground: View {
         case .classic:
             Color(nsColor: theme.tint.classicBody)
         case .glass, .clear:
-            scrim
+            // The glass takes the tint too, but a scrim over it would wash it out alone.
+            scrim.overlay {
+                if let accent = theme.tint.accent, !isFocusMode {
+                    Color(nsColor: accent).opacity(theme.style == .clear ? 0.12 : 0.16)
+                }
+            }
         }
     }
 

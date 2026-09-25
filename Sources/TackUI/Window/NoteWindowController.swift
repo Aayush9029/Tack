@@ -327,6 +327,8 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             menuItem.state = NoteTint.allCases.firstIndex(of: model.theme.tint) == menuItem.tag ? .on : .off
         case #selector(setNoteAppearance(_:)):
             menuItem.state = NoteAppearance.allCases.firstIndex(of: model.theme.appearance) == menuItem.tag ? .on : .off
+            // Classic is always paper; its appearance would change nothing.
+            return model.theme.style != .classic
         case #selector(makeTextBigger(_:)):
             return app.preferences.noteFontSize < (Preferences.fontSizes.last ?? 20)
         case #selector(makeTextSmaller(_:)):

@@ -15,7 +15,7 @@ struct EditorPane: View {
                     .padding(.vertical, 4)
             }
 
-            Section("Focus Mode") {
+            Section {
                 fontCards(selection: preferences.focusFont) { font in
                     preferences.$focusFont.withLock { $0 = font }
                 }
@@ -23,6 +23,9 @@ struct EditorPane: View {
                 Text("The line you are writing stays in the middle of the screen.")
                     .settingFootnote()
                 Toggle("Dim other paragraphs", isOn: Binding(preferences.$dimsOtherParagraphs))
+            } header: {
+                Text("Focus Mode")
+            } footer: {
                 Text("Press ⌘↩ in a note for focus mode, and again or Esc to leave.")
                     .settingFootnote()
             }

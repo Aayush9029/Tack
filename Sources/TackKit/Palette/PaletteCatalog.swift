@@ -37,7 +37,7 @@ public enum PaletteCatalog {
             PaletteItem(.setTint(tint), tint.title, symbol: "circle", keywords: ["tint", "color"], isChecked: context.theme.tint == tint, group: 1, swatch: tint)
         }
         let appearances = NoteAppearance.allCases.map { appearance in
-            PaletteItem(.setAppearance(appearance), appearance.title, symbol: appearance.symbol, keywords: ["appearance", "mode"], isChecked: context.theme.appearance == appearance, group: 2)
+            PaletteItem(.setAppearance(appearance), appearance.title, symbol: appearance.symbol, keywords: ["appearance", "mode"], isEnabled: context.theme.style != .classic, isChecked: context.theme.appearance == appearance, group: 2)
         }
         return styles + tints + appearances
     }

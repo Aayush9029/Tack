@@ -6,6 +6,8 @@ struct NoteStyleIllustration: View {
     let style: NoteStyle
     let tint: NoteTint
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         GeometryReader { proxy in
             let screen = proxy.size
@@ -31,6 +33,7 @@ struct NoteStyleIllustration: View {
                 }
                 .padding(note.width * 0.08)
                 .frame(width: note.width, height: note.height, alignment: .topLeading)
+                .environment(\.colorScheme, style == .classic ? .light : colorScheme)
                 .background { background(radius: radius) }
                 .clipShape(.rect(cornerRadius: radius, style: .continuous))
                 .shadow(color: .black.opacity(0.3), radius: 4, y: 2)

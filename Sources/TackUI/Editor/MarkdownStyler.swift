@@ -10,6 +10,8 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
     /// The text column's width, which sizes image and video previews.
     var columnWidth: CGFloat = 320
     var maxMediaHeight: CGFloat = 260
+    /// Set once any paragraph previews media, so a resize of a text-only note skips the scan.
+    private var hasMedia = false
 
     init(theme: EditorTheme) {
         self.theme = theme
@@ -67,6 +69,7 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
 
     /// Paragraphs that preview this file, after it finishes loading or the column resizes.
     func restyleMedia(in storage: NSTextStorage, matching url: URL? = nil) {
+        guard hasMedia || url != nil else { return }
         var ranges: [NSRange] = []
         storage.enumerateAttribute(.tackDecoration, in: NSRange(location: 0, length: storage.length)) { value, range, _ in
             guard let decoration = value as? Decoration, case let .media(mediaURL, _) = decoration.kind else { return }
@@ -92,8 +95,14 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
         storage.endEditing()
     }
 
+    /// An edit that ends in a newline split a paragraph; the new one after it keeps
+    /// the old paragraph's styling until it is restyled too.
     private func restyle(_ storage: NSTextStorage, around range: NSRange) {
         let string = storage.string as NSString
+        var range = range
+        if range.length > 0, NSMaxRange(range) < string.length, string.character(at: NSMaxRange(range) - 1) == 0x0A {
+            range.length += 1
+        }
         restyle(storage, paragraphs: string.paragraphRange(for: range), stopsEarly: true)
     }
 
@@ -214,6 +223,7 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
                 style.paragraphSpacing = height + 12
                 storage.addAttribute(.paragraphStyle, value: style, range: paragraph)
                 decorate(.media(url, height: height))
+                hasMedia = true
             }
         }
 

@@ -97,7 +97,8 @@ extension NoteTextView {
             }
         }
         undoManager?.endUndoGrouping()
-        let location = max(0, selection.location + firstDelta)
+        let floor = selectedParagraphs().first?.location ?? 0
+        let location = max(floor, selection.location + firstDelta)
         setSelectedRange(NSRange(location: location, length: max(0, selection.length + delta - firstDelta)))
     }
 
@@ -242,6 +243,16 @@ extension NoteTextView {
             lines.append(indent + prefix(block, index) + text)
         }
         let joined = lines.joined(separator: "\n")
-        replace(whole, with: joined, selecting: NSRange(location: whole.location + (joined as NSString).length, length: 0))
+        let selection = selectedRange()
+        replace(whole, with: joined)
+        // One line keeps the caret or selection where it was in the text; several
+        // lines stay selected.
+        let length = (joined as NSString).length
+        if paragraphs.count == 1 {
+            let location = min(max(whole.location, selection.location + length - whole.length), whole.location + length)
+            setSelectedRange(NSRange(location: location, length: min(selection.length, whole.location + length - location)))
+        } else {
+            setSelectedRange(NSRange(location: whole.location, length: length))
+        }
     }
 }

@@ -46,6 +46,7 @@ final class PaletteController: NSObject, NSWindowDelegate {
             }
         }
         guard let parent else { return }
+        panel.appearance = parent.appearance
         panel.setFrame(frame(height: height, in: parent), display: false)
         panel.alphaValue = 0
         parent.addChildWindow(panel, ordered: .above)

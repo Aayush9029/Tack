@@ -83,6 +83,38 @@ struct EditorTypingTests {
         #expect(editor.font(at: 22)?.fontDescriptor.symbolicTraits.contains(.bold) == false)
     }
 
+    @Test func returnInsideAHeadingRestylesTheTail() async {
+        let editor = Harness(focus: false)
+        await editor.type("# Heading text")
+        for _ in 0..<4 { await editor.key(#selector(NSResponder.moveLeft(_:))) }
+        await editor.type("\n")
+        #expect(editor.text == "# Heading \ntext")
+        #expect(editor.font(at: 11)?.fontDescriptor.symbolicTraits.contains(.bold) == false)
+    }
+
+    @Test func outdentKeepsTheCaretOnItsLine() async {
+        let editor = Harness(focus: false)
+        await editor.type("first\n")
+        editor.textView.insertText("  - item", replacementRange: editor.textView.selectedRange())
+        await editor.settle()
+        editor.textView.setSelectedRange(NSRange(location: 7, length: 0))
+        await editor.key(#selector(NSResponder.insertBacktab(_:)))
+        #expect(editor.text == "first\n- item")
+        #expect(editor.caret == 6)
+    }
+
+    @Test func headingCommandKeepsTheCaret() async {
+        let editor = Harness(focus: false)
+        await editor.type("plan the week")
+        editor.textView.setSelectedRange(NSRange(location: 5, length: 0))
+        let item = NSMenuItem()
+        item.tag = 2
+        editor.textView.setHeading(item)
+        await editor.settle()
+        #expect(editor.text == "## plan the week")
+        #expect(editor.caret == 8)
+    }
+
     @Test func listsContinueAndEnd() async {
         let editor = Harness(focus: false)
         await editor.type("- [ ] milk\neggs\n\nafter")

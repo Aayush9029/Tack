@@ -56,6 +56,10 @@ struct NoteEditor: NSViewRepresentable {
         private var configuration: EditorConfiguration?
         private var mediaObserver: (any NSObjectProtocol)?
 
+        isolated deinit {
+            if let mediaObserver { NotificationCenter.default.removeObserver(mediaObserver) }
+        }
+
         init(model: NoteWindowModel) {
             self.model = model
             super.init()

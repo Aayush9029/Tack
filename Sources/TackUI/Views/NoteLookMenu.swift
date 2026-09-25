@@ -28,6 +28,7 @@ struct NoteLookMenu: View {
                 Toggle(appearance.title, isOn: selecting(model.theme.appearance == appearance) { model.appearanceSelected(appearance) })
             }
         }
+        .disabled(model.theme.style == .classic)
 
         Divider()
         Button("Rename…", action: model.renameButtonTapped)

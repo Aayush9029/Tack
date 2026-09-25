@@ -8,7 +8,7 @@ struct NoteTitleBar: View {
     /// Classic's header is a solid colour in both appearances, so its title is dark ink.
     private var titleStyle: AnyShapeStyle {
         if model.theme.style == .classic {
-            return AnyShapeStyle(Color.black.opacity(isHovering ? 0.62 : 0.42))
+            return AnyShapeStyle(Color.black.opacity(isHovering ? 0.75 : 0.55))
         }
         return isHovering ? AnyShapeStyle(.secondary) : AnyShapeStyle(.tertiary)
     }
