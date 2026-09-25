@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/readme/banner.png" width="100%" alt="A Tack note in Liquid Glass with a checklist, a quote and a link">
+  <img src="assets/readme/banner.jpg" width="100%" alt="A Tack note in Liquid Glass with a checklist, a quote and a link">
 </p>
 
 ## Install

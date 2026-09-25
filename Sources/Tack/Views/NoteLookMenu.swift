@@ -1,35 +1,41 @@
 import SwiftUI
 import TackKit
 
-/// The title's context menu: how this note looks.
+/// The title's context menu: how this note looks. Toggles, not pickers: a Picker
+/// inside a context menu never calls its setter on macOS.
 struct NoteLookMenu: View {
     let model: NoteWindowModel
 
     var body: some View {
-        Picker("Style", selection: Binding(get: { model.theme.style }, set: model.styleSelected)) {
+        Section("Style") {
             ForEach(NoteStyle.allCases) { style in
-                Label(style.title, systemImage: style.symbol).tag(style)
+                Toggle(isOn: selecting(model.theme.style == style) { model.styleSelected(style) }) {
+                    Label(style.title, systemImage: style.symbol)
+                }
             }
         }
-        .pickerStyle(.inline)
 
-        Picker("Tint", selection: Binding(get: { model.theme.tint }, set: model.tintSelected)) {
+        Menu("Tint") {
             ForEach(NoteTint.allCases) { tint in
-                Label { Text(tint.title) } icon: { Image(nsImage: tint.menuImage) }.tag(tint)
+                Toggle(isOn: selecting(model.theme.tint == tint) { model.tintSelected(tint) }) {
+                    Label { Text(tint.title) } icon: { Image(nsImage: tint.menuImage) }
+                }
             }
         }
-        .pickerStyle(.menu)
 
-        Picker("Appearance", selection: Binding(get: { model.theme.appearance }, set: model.appearanceSelected)) {
+        Menu("Appearance") {
             ForEach(NoteAppearance.allCases) { appearance in
-                Text(appearance.title).tag(appearance)
+                Toggle(appearance.title, isOn: selecting(model.theme.appearance == appearance) { model.appearanceSelected(appearance) })
             }
         }
-        .pickerStyle(.menu)
 
         Divider()
         Button("Rename…", action: model.renameButtonTapped)
         Button(model.isPinned ? "Unpin from Top" : "Pin on Top", action: model.pinButtonTapped)
         Button(model.isFocusMode ? "Exit Focus Mode" : "Focus Mode", action: model.focusModeToggled)
+    }
+
+    private func selecting(_ isSelected: Bool, _ select: @escaping () -> Void) -> Binding<Bool> {
+        Binding(get: { isSelected }, set: { _ in select() })
     }
 }
