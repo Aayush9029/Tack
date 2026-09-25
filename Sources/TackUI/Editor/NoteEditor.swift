@@ -67,6 +67,8 @@ struct NoteEditor: NSViewRepresentable {
 
         func load() {
             guard let textView, let storage = textView.textStorage else { return }
+            let state = Log.signposter.beginInterval("Load note")
+            defer { Log.signposter.endInterval("Load note", state) }
             revision = model.revision
             textView.typingAttributes = styler.baseAttributes
             storage.setAttributedString(NSAttributedString(string: model.body, attributes: styler.baseAttributes))

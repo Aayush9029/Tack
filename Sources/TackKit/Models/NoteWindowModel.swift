@@ -100,6 +100,8 @@ public final class NoteWindowModel: Identifiable {
 
     public func save() async {
         guard isDirty else { return }
+        let state = Log.signposter.beginInterval("Save note")
+        defer { Log.signposter.endInterval("Save note", state) }
         isDirty = false
         let (id, body, now) = (noteID, body, now)
         await withErrorReporting {
@@ -129,7 +131,10 @@ public final class NoteWindowModel: Identifiable {
         guard key != inferredFrom, sample.trimmingCharacters(in: .whitespacesAndNewlines).count >= 12 else { return }
         inferredFrom = key
         let id = noteID
+        let state = Log.signposter.beginInterval("Infer title")
         let suggestion = await withErrorReporting { try await titleClient.suggest(sample) } ?? nil
+        Log.signposter.endInterval("Infer title", state)
+        Log.titles.debug("Inferred \(suggestion ?? "no title", privacy: .private) for \(id.rawValue, privacy: .public)")
         guard let suggestion, id == noteID, suggestion != inferredTitle else { return }
         inferredTitle = suggestion
         refreshDisplayTitle()

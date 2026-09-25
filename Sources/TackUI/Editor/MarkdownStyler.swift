@@ -41,6 +41,8 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
         pending = nil
         let clamped = NSIntersectionRange(range, NSRange(location: 0, length: storage.length))
         let location = min(range.location, storage.length)
+        let state = Log.signposter.beginInterval("Restyle edit")
+        defer { Log.signposter.endInterval("Restyle edit", state) }
         storage.beginEditing()
         restyle(storage, around: clamped.length > 0 ? clamped : NSRange(location: location, length: 0))
         storage.endEditing()
@@ -56,6 +58,8 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
 
     func styleAll(_ storage: NSTextStorage) {
         pending = nil
+        let state = Log.signposter.beginInterval("Style note", "\(storage.length) characters")
+        defer { Log.signposter.endInterval("Style note", state) }
         storage.beginEditing()
         restyle(storage, paragraphs: NSRange(location: 0, length: storage.length), stopsEarly: false)
         storage.endEditing()

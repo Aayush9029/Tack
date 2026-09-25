@@ -51,6 +51,8 @@ public final class PaletteModel: Identifiable {
         if !text.isEmpty {
             do { try await clock.sleep(for: tuning.debounce) } catch { return }
         }
+        let state = Log.signposter.beginInterval("Search notes")
+        defer { Log.signposter.endInterval("Search notes", state) }
         let hits = await withErrorReporting {
             try await database.read { db in
                 text.isEmpty

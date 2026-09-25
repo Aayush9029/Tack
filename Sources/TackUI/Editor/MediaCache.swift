@@ -1,6 +1,7 @@
 import AppKit
 import AVFoundation
 import ImageIO
+import TackKit
 
 /// Decoded thumbnails for images and video posters. Decoding runs off the main
 /// actor at display size; a finished load posts `didLoad` so editors restyle the
@@ -40,6 +41,7 @@ final class MediaCache {
                 media[url] = result
             } else {
                 failed.insert(url)
+                Log.editor.notice("Could not load media at \(url.path(percentEncoded: false), privacy: .private)")
             }
             NotificationCenter.default.post(name: Self.didLoad, object: url)
         }
