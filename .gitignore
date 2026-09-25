@@ -1,0 +1,8 @@
+.build/
+.swiftpm/
+*.app
+*.dmg
+*.zip
+.local/
+.DS_Store
+Tack.icns
