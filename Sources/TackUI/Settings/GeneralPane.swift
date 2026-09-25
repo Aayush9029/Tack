@@ -56,6 +56,8 @@ struct GeneralPane: View {
                 Text("New notes float above every window. The pin in a note's corner changes one note at a time.")
                     .settingFootnote()
             }
+
+            CommandLineSection()
         }
         .task { launchAtLogin.refresh() }
     }

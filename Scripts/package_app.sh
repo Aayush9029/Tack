@@ -62,6 +62,14 @@ chmod +x "$APP/Contents/MacOS/$APP_NAME"
 
 cp -R "$ROOT/Resources/." "$APP/Contents/Resources/"
 
+# The command line tool ships inside the app; Settings links it onto the PATH.
+mkdir -p "$APP/Contents/Helpers"
+cli=()
+for ARCH in "${ARCH_LIST[@]}"; do
+  cli+=("$(swift build -c "$CONF" --arch "$ARCH" --show-bin-path)/TackCLI")
+done
+if [[ ${#cli[@]} -gt 1 ]]; then lipo -create "${cli[@]}" -output "$APP/Contents/Helpers/tack"; else cp "${cli[0]}" "$APP/Contents/Helpers/tack"; fi
+
 shopt -s nullglob
 for bundle in "$BIN_DIR/"*.bundle; do
   cp -R "$bundle" "$APP/Contents/Resources/"
@@ -88,6 +96,7 @@ find "$APP" -name '._*' -delete
 
 ENTITLEMENTS="$ROOT/Scripts/Tack.entitlements"
 if [[ "$SIGNING_MODE" == "adhoc" || -z "$APP_IDENTITY" ]]; then
+  codesign --force --sign "-" "$APP/Contents/Helpers/tack"
   codesign --force --sign "-" --entitlements "$ENTITLEMENTS" "$APP"
 else
   KEYCHAIN_ARGS=()
@@ -95,6 +104,7 @@ else
   while IFS= read -r -d '' bundle; do
     codesign --force --timestamp --options runtime "${KEYCHAIN_ARGS[@]}" --sign "$APP_IDENTITY" "$bundle"
   done < <(find "$APP/Contents/Resources" -name '*.bundle' -type d -print0)
+  codesign --force --timestamp --options runtime "${KEYCHAIN_ARGS[@]}" --sign "$APP_IDENTITY" "$APP/Contents/Helpers/tack"
   codesign --force --timestamp --options runtime "${KEYCHAIN_ARGS[@]}" \
     --entitlements "$ENTITLEMENTS" --sign "$APP_IDENTITY" "$APP"
 fi

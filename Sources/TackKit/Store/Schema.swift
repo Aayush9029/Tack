@@ -4,15 +4,21 @@ import SQLiteData
 
 public extension DependencyValues {
     mutating func bootstrapDatabase() throws {
-        let directory = URL.applicationSupportDirectory.appending(path: "Tack", directoryHint: .isDirectory)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        // An explicit path: the library default is a Mac-wide SQLiteData.db that any
-        // other SQLiteData app shares and that DEBUG's erase-on-schema-change wipes.
-        let database = try SQLiteData.defaultDatabase(
-            path: directory.appending(path: "notes.db").path(percentEncoded: false)
-        )
+        let database = try SQLiteData.defaultDatabase(path: Self.databaseURL().path(percentEncoded: false))
         try Self.migrate(database)
         defaultDatabase = database
+    }
+
+    /// `TACK_DATABASE` points the app or the command line tool at another file, for
+    /// tests and scripts. Otherwise an explicit path: the library default is a
+    /// Mac-wide SQLiteData.db that any other SQLiteData app shares.
+    static public func databaseURL() throws -> URL {
+        if let path = ProcessInfo.processInfo.environment["TACK_DATABASE"], !path.isEmpty {
+            return URL(filePath: (path as NSString).expandingTildeInPath)
+        }
+        let directory = URL.applicationSupportDirectory.appending(path: "Tack", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory.appending(path: "notes.db")
     }
 
     mutating func bootstrapInMemoryDatabase() throws {

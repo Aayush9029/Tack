@@ -64,7 +64,12 @@ public final class AppModel {
                 if let appearance { try Note.update { $0.appearance = appearance }.execute(db) }
             }
         }
-        windows.forEach { $0.reloadFromStore() }
+        windows.forEach { $0.reloadFromStore(fallbackTheme: preferences.defaultTheme) }
+    }
+
+    /// The command line tool, or another copy of the database, changed notes.
+    public func notesChangedOutside() {
+        windows.forEach { $0.reloadFromStore(fallbackTheme: preferences.defaultTheme) }
     }
 
     public func window(showing noteID: Note.ID) -> NoteWindowModel? {

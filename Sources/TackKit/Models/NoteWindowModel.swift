@@ -162,13 +162,17 @@ public final class NoteWindowModel: Identifiable {
 
     /// Picks up a change made outside this window: Settings, the command line, another app.
     /// Unsaved typing wins over the store.
-    public func reloadFromStore() {
-        guard let note = fetch(noteID) else { return }
+    public func reloadFromStore(fallbackTheme: NoteTheme = NoteTheme()) {
+        guard let note = fetch(noteID) else {
+            noteDeletedElsewhere(noteID, fallbackTheme: fallbackTheme)
+            return
+        }
         theme = note.theme
         customTitle = note.title
         inferredTitle = note.inferredTitle
         guard !isDirty, note.body != body else {
             refreshDisplayTitle()
+            Task { await refreshNeighbors() }
             return
         }
         body = note.body

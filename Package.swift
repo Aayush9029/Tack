@@ -8,6 +8,7 @@ let package = Package(
     ],
     products: [
         .executable(name: "Tack", targets: ["Tack"]),
+        .executable(name: "TackCLI", targets: ["TackCLI"]),
         .library(name: "TackKit", targets: ["TackKit"]),
     ],
     dependencies: [
@@ -21,6 +22,7 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-debug-snapshots", from: "0.5.1"),
         .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", from: "3.1.0"),
         .package(url: "https://github.com/swiftlang/swift-markdown", from: "0.9.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.8.2"),
     ],
     targets: [
         .target(
@@ -47,6 +49,13 @@ let package = Package(
         .executableTarget(
             name: "Tack",
             dependencies: ["TackKit", "TackUI"]
+        ),
+        .executableTarget(
+            name: "TackCLI",
+            dependencies: [
+                "TackKit",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ]
         ),
         .testTarget(
             name: "TackKitTests",

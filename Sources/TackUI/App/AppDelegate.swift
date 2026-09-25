@@ -25,6 +25,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValid
             self?.statusItem?.isVisible = $0
         }
 
+        NoteChangeSignal.observe { [weak self] in self?.app.notesChangedOutside() }
+
         for model in app.launch() {
             open(model)
         }
