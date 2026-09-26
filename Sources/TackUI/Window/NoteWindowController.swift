@@ -104,12 +104,11 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private func applyPinned(_ isPinned: Bool) {
         guard let window else { return }
         window.level = isPinned || model.isFocusMode ? .floating : .normal
-        // Stationary like a desktop widget: Mission Control leaves notes where they are
-        // instead of shuffling them in as windows, and ⌘` skips them, the way the app
-        // stays out of the Dock and ⌘Tab.
+        // Transient: Mission Control hides notes altogether, and ⌘` skips them, the way
+        // the app stays out of the Dock and ⌘Tab.
         window.collectionBehavior = isPinned
-            ? [.stationary, .canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
-            : [.stationary, .ignoresCycle]
+            ? [.transient, .canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+            : [.transient, .ignoresCycle]
         app.syncRecords()
     }
 
