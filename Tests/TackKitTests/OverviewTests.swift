@@ -54,4 +54,21 @@ struct OverviewTests {
         model.escapeKeyPressed()
         #expect(model.query.isEmpty)
     }
+
+    @Test func deleteWaitsForConfirmation() async throws {
+        let store = NoteStore()
+        try store.add(body: "Keep", theme: NoteTheme())
+        let model = OverviewModel()
+        var deleted: [Note.ID] = []
+        model.onDelete = { deleted.append($0) }
+        await model.load()
+        let card = try #require(model.cards.first)
+        model.deleteMenuItemTapped(card)
+        model.deletionCancelled()
+        #expect(deleted.isEmpty)
+        model.deleteMenuItemTapped(card)
+        model.deletionConfirmed()
+        #expect(deleted == [card.id])
+        #expect(model.cards.isEmpty)
+    }
 }

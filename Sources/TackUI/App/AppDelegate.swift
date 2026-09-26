@@ -1,4 +1,5 @@
 import AppKit
+import IssueReporting
 import KeyboardShortcuts
 import SwiftUI
 import TackKit
@@ -10,6 +11,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var overview: OverviewController?
+    private var lastUsedWindow: UUID?
     private var observers: [Task<Void, Never>] = []
 
     override public init() {
@@ -71,6 +73,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.onNewWindow = { [weak self] in self?.newNoteInWindow(nil) }
         controller.onShowWindow = { [weak self] id in self?.controllers[id]?.show() }
         controller.onShowOverview = { [weak self] in self?.showOverview(nil) }
+        controller.onBecomeKey = { [weak self] id in self?.lastUsedWindow = id }
         controllers[model.id] = controller
         controller.show()
     }
@@ -135,25 +138,46 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         guard let screen = NSScreen.screens.first(where: { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) }) ?? NSScreen.main else { return }
         let model = OverviewModel()
-        model.onOpen = { [weak self] id in self?.overviewOpened(id) }
+        model.onOpen = { [weak self] id, inNewWindow in self?.overviewOpened(id, inNewWindow: inNewWindow) }
         model.onNewNote = { [weak self] in
-            self?.overview?.dismiss()
-            self?.newNoteInWindow(nil)
+            guard let self else { return }
+            overview?.dismiss()
+            if let controller = lastUsedWindow.flatMap({ controllers[$0] }) ?? controllers.values.first {
+                controller.model.newNoteButtonTapped(theme: app.preferences.defaultTheme)
+                controller.show()
+            } else {
+                newNoteInWindow(nil)
+            }
         }
         model.onDismiss = { [weak self] in self?.overview?.dismiss() }
+        model.onDelete = { [weak self] id in self?.deleteFromOverview(id) }
         let controller = OverviewController(model: model, screen: screen)
         controller.onClose = { [weak self] in self?.overview = nil }
         overview = controller
         controller.present()
     }
 
-    /// A card brings its note up: the window that shows it, or a new one.
-    private func overviewOpened(_ id: Note.ID) {
+    /// A card brings its note up where it already is, or in the note window used last,
+    /// so the desktop does not fill with windows. ⌘-click asks for a window of its own.
+    private func overviewOpened(_ id: Note.ID, inNewWindow: Bool) {
         overview?.dismiss()
         if let window = app.window(showing: id), let controller = controllers[window.id] {
             controller.show()
+        } else if !inNewWindow, let controller = lastUsedWindow.flatMap({ controllers[$0] }) ?? controllers.values.first {
+            controller.model.noteSelected(id)
+            controller.show()
         } else if let model = app.openButtonTapped(id) {
             open(model)
+        }
+    }
+
+    /// Unsaved typing lands first; the change signal then moves any window that
+    /// showed the note on to a neighbor.
+    private func deleteFromOverview(_ id: Note.ID) {
+        app.windows.forEach { $0.flush() }
+        let store = NoteStore()
+        withErrorReporting {
+            try store.delete(store.resolve(id.rawValue.uuidString))
         }
     }
 

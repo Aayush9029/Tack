@@ -20,6 +20,7 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     var onNewWindow: () -> Void = {}
     var onShowWindow: (UUID) -> Void = { _ in }
     var onShowOverview: () -> Void = {}
+    var onBecomeKey: (UUID) -> Void = { _ in }
 
     static let defaultSize = NSSize(width: 360, height: 320)
 
@@ -364,6 +365,7 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     func windowDidBecomeKey(_ notification: Notification) {
         state.isKey = true
         lift()
+        onBecomeKey(model.id)
     }
 
     func windowDidResignKey(_ notification: Notification) {

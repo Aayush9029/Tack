@@ -66,7 +66,9 @@ final class PaletteController: NSObject, NSWindowDelegate {
         } completionHandler: {
             MainActor.assumeIsolated { panel.orderOut(nil) }
         }
-        if parent?.isVisible == true { parent?.makeKey() }
+        // Hand the keyboard back only if the palette still has it; a command such as
+        // All Notes may already have given it to another window.
+        if panel.isKeyWindow, parent?.isVisible == true { parent?.makeKey() }
     }
 
     private func resize(to height: CGFloat) {

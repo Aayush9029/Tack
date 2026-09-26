@@ -4,7 +4,7 @@ import TackKit
 
 /// All notes, full screen over everything, like focus mode for the whole collection.
 @MainActor
-final class OverviewController: NSObject, NSWindowDelegate {
+final class OverviewController: NSObject {
     let model: OverviewModel
     private let window: OverviewWindow
     var onClose: () -> Void = {}
@@ -16,19 +16,21 @@ final class OverviewController: NSObject, NSWindowDelegate {
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
-        window.level = .floating
+        // Over the menu bar and the Dock, so nothing but the notes shows.
+        window.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
         window.isReleasedWhenClosed = false
         window.animationBehavior = .none
         window.collectionBehavior = [.transient, .canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
-        window.delegate = self
+        // Closing on resigning key would close it for its own context menus and
+        // confirmations; it covers the screen, so only another app can take over.
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidResignActive), name: NSApplication.didResignActiveNotification, object: nil)
         window.onCancel = { [weak model] in model?.escapeKeyPressed() }
-        let hosting = NSHostingView(rootView: OverviewView(model: model))
+        let hosting = NSHostingView(rootView: OverviewView(model: model, topInset: max(44, screen.safeAreaInsets.top + 24)))
         hosting.sizingOptions = []
         window.contentView = GlassHost.make(content: hosting, cornerRadius: 0, size: screen.frame.size)
     }
 
     func present() {
-        NSApp.presentationOptions = [.autoHideDock, .autoHideMenuBar]
         window.alphaValue = 0
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
@@ -39,8 +41,7 @@ final class OverviewController: NSObject, NSWindowDelegate {
     }
 
     func dismiss() {
-        window.delegate = nil
-        NSApp.presentationOptions = []
+        NotificationCenter.default.removeObserver(self)
         let window = window
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.16
@@ -51,7 +52,7 @@ final class OverviewController: NSObject, NSWindowDelegate {
         onClose()
     }
 
-    func windowDidResignKey(_ notification: Notification) {
+    @objc private func applicationDidResignActive() {
         dismiss()
     }
 }

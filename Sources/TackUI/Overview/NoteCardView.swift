@@ -21,19 +21,20 @@ struct NoteCardView: View {
 
     var body: some View {
         Button(action: open) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 9) {
                 Text(card.title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .lineLimit(2)
                 ForEach(Array(card.lines.enumerated()), id: \.offset) { _, line in
                     PreviewLineView(line: line)
                 }
+                Spacer(minLength: 12)
                 footer
-                    .padding(.top, 4)
             }
             .foregroundStyle(.primary)
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(18)
+            // A sticky note's shape even when the note is one word.
+            .frame(maxWidth: .infinity, minHeight: 200, alignment: .topLeading)
             .background { background }
             .clipShape(.rect(cornerRadius: radius, style: .continuous))
             .overlay {
@@ -61,7 +62,7 @@ struct NoteCardView: View {
             Spacer(minLength: 0)
             Text(card.updatedAt, format: .relative(presentation: .named))
         }
-        .font(.system(size: 11, weight: .medium))
+        .font(.system(size: 11.5, weight: .medium))
         .foregroundStyle(.tertiary)
     }
 

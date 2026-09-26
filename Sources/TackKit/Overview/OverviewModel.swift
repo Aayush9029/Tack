@@ -15,9 +15,13 @@ public final class OverviewModel {
     public private(set) var cards: [NoteCard] = []
     public private(set) var query = ""
     public private(set) var isLoaded = false
+    /// A card waiting for the user to confirm its deletion.
+    public private(set) var pendingDeletion: NoteCard?
 
-    @ObservationIgnored public var onOpen: (Note.ID) -> Void = { _ in }
+    /// The note, and whether it wants a window of its own rather than the last one used.
+    @ObservationIgnored public var onOpen: (Note.ID, _ inNewWindow: Bool) -> Void = { _, _ in }
     @ObservationIgnored public var onNewNote: () -> Void = {}
+    @ObservationIgnored public var onDelete: (Note.ID) -> Void = { _ in }
     @ObservationIgnored public var onDismiss: () -> Void = {}
 
     public init() {}
@@ -50,13 +54,28 @@ public final class OverviewModel {
         isLoaded = true
     }
 
-    public func cardTapped(_ id: Note.ID) {
-        onOpen(id)
+    public func cardTapped(_ id: Note.ID, inNewWindow: Bool = false) {
+        onOpen(id, inNewWindow)
     }
 
     public func returnKeyPressed() {
         guard let first = cards.first else { return }
-        onOpen(first.id)
+        onOpen(first.id, false)
+    }
+
+    public func deleteMenuItemTapped(_ card: NoteCard) {
+        pendingDeletion = card
+    }
+
+    public func deletionConfirmed() {
+        guard let card = pendingDeletion else { return }
+        pendingDeletion = nil
+        cards.removeAll { $0.id == card.id }
+        onDelete(card.id)
+    }
+
+    public func deletionCancelled() {
+        pendingDeletion = nil
     }
 
     public func newNoteButtonTapped() {
