@@ -10,6 +10,7 @@ import Testing
         let textView = NoteTextView.make()
         let styler = MarkdownStyler(theme: EditorTheme(family: .system, size: 15, isFocusMode: false))
         let scrollView = NSScrollView(frame: window.contentView!.bounds)
+        scrollView.automaticallyAdjustsContentInsets = false
         scrollView.documentView = textView
         textView.frame = scrollView.contentView.bounds
         window.contentView = scrollView
@@ -29,6 +30,7 @@ import Testing
         let viewport = try #require(manager.textViewportLayoutController.viewportRange)
         #expect(manager.offset(from: viewport.location, to: viewport.endLocation) == (body as NSString).length)
         #expect((fragments.last?.maxY ?? .infinity) + textView.textContainerInset.height <= textView.frame.height)
+        #expect(scrollView.contentInsets.bottom == Metrics.titleBarHeight)
         withExtendedLifetime(window) {}
     }
 }

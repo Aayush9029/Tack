@@ -135,6 +135,12 @@ final class NoteTextView: NSTextView {
                 manager.textViewportLayoutController.layoutViewport()
             }
         }
+        // Room under the last line for the pin, which shows on hover in the corner;
+        // text scrolls up past it instead of running beneath.
+        let bottom: CGFloat = isFocusMode ? 0 : Metrics.titleBarHeight
+        if scrollView.contentInsets.bottom != bottom {
+            scrollView.contentInsets = NSEdgeInsets(top: 0, left: 0, bottom: bottom, right: 0)
+        }
         onColumnWidthChange(max(120, viewport.width - inset.width * 2 - hang))
         // The first layout can run while SwiftUI still has the editor at a smaller size.
         // Without this, lines that come into view on growth stay undrawn.
