@@ -104,7 +104,11 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private func applyPinned(_ isPinned: Bool) {
         guard let window else { return }
         window.level = isPinned || model.isFocusMode ? .floating : .normal
-        window.collectionBehavior = isPinned ? [.canJoinAllSpaces, .fullScreenAuxiliary] : [.managed]
+        // Auxiliary and out of the ⌘` cycle, so notes stay out of Mission Control and
+        // window switchers the way the app stays out of the Dock and ⌘Tab.
+        window.collectionBehavior = isPinned
+            ? [.canJoinAllSpaces, .fullScreenAuxiliary, .auxiliary, .ignoresCycle]
+            : [.managed, .auxiliary, .ignoresCycle]
         app.syncRecords()
     }
 
