@@ -38,6 +38,9 @@ Releases are built, signed, notarized and uploaded by `.local/scripts/release.sh
 - A plain-text `NSTextView` disables Paste for an image-only clipboard; `validateUserInterfaceItem` turns it back on.
 - Resizing, relayout, scrolling and restyling in the editor go through `NoteTextView.setNeedsRefresh`, which runs them after the current event with the selection held. Doing them inside an edit or a layout pass moved the insertion point (reversed typing) and threw inside AppKit layout.
 - A heading marker is clamped to the line: a lone `#` used to crash the styler.
+- Unpinned notes sit on the desktop layer (`NoteWindowController.desktopLevel`) and are stationary, so no window buries them and Show Desktop shows them; a key note rises to `.floating` and settles back when Tack resigns active. Pinned notes float and are transient, so Mission Control hides them. Tack is an `LSUIElement` app, out of the Dock and ⌘Tab.
+- Only one Tack runs (`SingleInstance`); two copies would save over each other's notes.
+- The All Notes grid (⇧⌘O, not ⇧⌘↩, which macOS gives to Writing Tools) is a full-screen window over everything; `WaterfallLayout` puts each card in the shortest column.
 - Classic is always paper-colored and its window is forced to the light appearance; dark Classic looked like glass.
 - Settings' Style, Tint and Appearance change every note (`AppModel.lookChanged`); the title menu changes one.
 - A title is inferred with Foundation Models only when the first line is long or a list item (`NoteText.wantsInferredTitle`), after a save, once per change of the note's start.

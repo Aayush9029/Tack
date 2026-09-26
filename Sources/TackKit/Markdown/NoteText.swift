@@ -48,6 +48,11 @@ public enum NoteText {
         return parts.joined(separator: " ")
     }
 
+    /// A line's words without its Markdown: markers, emphasis, code ticks, link targets.
+    public static func plain(_ line: some StringProtocol) -> String {
+        strip(line)
+    }
+
     private static func strip(_ line: some StringProtocol) -> String {
         var text = Substring(line).drop { $0 == " " || $0 == "\t" }
         for prefix in ["- [ ] ", "- [x] ", "- [X] ", "* [ ] ", "* [x] "] where text.hasPrefix(prefix) {
@@ -63,6 +68,8 @@ public enum NoteText {
             .replacingOccurrences(of: #"!\[[^\]]*\]\([^)]*\)"#, with: "", options: .regularExpression)
             .replacingOccurrences(of: #"\[([^\]]+)\]\([^)]*\)"#, with: "$1", options: .regularExpression)
             .replacingOccurrences(of: "**", with: "")
+            .replacingOccurrences(of: #"(?<![\w*])\*(\S[^*]*?)\*(?![\w*])"#, with: "$1", options: .regularExpression)
+            .replacingOccurrences(of: #"(?<![\w_])_(\S[^_]*?)_(?![\w_])"#, with: "$1", options: .regularExpression)
             .replacingOccurrences(of: "__", with: "")
             .replacingOccurrences(of: "~~", with: "")
             .replacingOccurrences(of: "`", with: "")

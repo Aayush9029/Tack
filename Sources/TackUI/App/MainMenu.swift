@@ -140,6 +140,7 @@ enum MainMenu {
         menu.addItem(.separator())
         menu.addItem(item("Pin on Top", #selector(NoteWindowController.togglePin(_:)), "p", [.command, .shift]))
         menu.addItem(item("Focus Mode", #selector(NoteWindowController.toggleFocusMode(_:)), "\r"))
+        menu.addItem(item("All Notes", #selector(AppDelegate.showOverview(_:)), "o", [.command, .shift]))
         menu.addItem(.separator())
 
         let style = NSMenu(title: "Style")

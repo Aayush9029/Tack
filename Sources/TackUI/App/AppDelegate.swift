@@ -9,6 +9,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var controllers: [UUID: NoteWindowController] = [:]
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
+    private var overview: OverviewController?
     private var observers: [Task<Void, Never>] = []
 
     override public init() {
@@ -69,6 +70,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.onOpenSettings = { [weak self] in self?.showSettings(nil) }
         controller.onNewWindow = { [weak self] in self?.newNoteInWindow(nil) }
         controller.onShowWindow = { [weak self] id in self?.controllers[id]?.show() }
+        controller.onShowOverview = { [weak self] in self?.showOverview(nil) }
         controllers[model.id] = controller
         controller.show()
     }
@@ -123,6 +125,35 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         } else if let model = app.launch().first {
             open(model)
             model.browseButtonTapped()
+        }
+    }
+
+    @objc func showOverview(_ sender: Any?) {
+        if let overview {
+            overview.dismiss()
+            return
+        }
+        guard let screen = NSScreen.screens.first(where: { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) }) ?? NSScreen.main else { return }
+        let model = OverviewModel()
+        model.onOpen = { [weak self] id in self?.overviewOpened(id) }
+        model.onNewNote = { [weak self] in
+            self?.overview?.dismiss()
+            self?.newNoteInWindow(nil)
+        }
+        model.onDismiss = { [weak self] in self?.overview?.dismiss() }
+        let controller = OverviewController(model: model, screen: screen)
+        controller.onClose = { [weak self] in self?.overview = nil }
+        overview = controller
+        controller.present()
+    }
+
+    /// A card brings its note up: the window that shows it, or a new one.
+    private func overviewOpened(_ id: Note.ID) {
+        overview?.dismiss()
+        if let window = app.window(showing: id), let controller = controllers[window.id] {
+            controller.show()
+        } else if let model = app.openButtonTapped(id) {
+            open(model)
         }
     }
 
@@ -184,6 +215,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
         menu.addItem(withTitle: "New Note", action: #selector(newNoteInWindow(_:)), keyEquivalent: "").target = self
+        menu.addItem(withTitle: "All Notes", action: #selector(showOverview(_:)), keyEquivalent: "").target = self
         menu.addItem(withTitle: "Browse Notes…", action: #selector(browseNotes(_:)), keyEquivalent: "").target = self
         menu.addItem(withTitle: "Show All Notes", action: #selector(showAllNotes(_:)), keyEquivalent: "").target = self
         menu.addItem(.separator())
@@ -191,7 +223,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Tack", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.items.first?.setShortcut(for: .newNote)
-        menu.items[2].setShortcut(for: .showNotes)
+        menu.items[3].setShortcut(for: .showNotes)
         item.menu = menu
         statusItem = item
     }

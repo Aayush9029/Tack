@@ -19,6 +19,7 @@ public enum NoteCommand: Hashable, Sendable {
     case rename
     case delete
     case settings
+    case overview
     case open(Note.ID)
     case page(PalettePage)
 }

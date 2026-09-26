@@ -19,6 +19,7 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     var onOpenSettings: () -> Void = {}
     var onNewWindow: () -> Void = {}
     var onShowWindow: (UUID) -> Void = { _ in }
+    var onShowOverview: () -> Void = {}
 
     static let defaultSize = NSSize(width: 360, height: 320)
 
@@ -214,6 +215,8 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             model.renameButtonTapped()
         case .delete:
             deleteNote()
+        case .overview:
+            onShowOverview()
         case .settings:
             onOpenSettings()
         case let .open(id):

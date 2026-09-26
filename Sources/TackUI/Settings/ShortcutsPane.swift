@@ -20,6 +20,7 @@ struct ShortcutsPane: View {
                 LabeledContent("Previous or next note", value: "⌥ ⌘ ← →, or swipe")
                 LabeledContent("Pin on top", value: "⇧ ⌘ P")
                 LabeledContent("Focus mode", value: "⌘ ↩")
+                LabeledContent("All notes", value: "⇧ ⌘ O")
                 LabeledContent("Copy as", value: "⇧ ⌘ C")
                 LabeledContent("Export", value: "⇧ ⌘ E")
             }

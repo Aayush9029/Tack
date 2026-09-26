@@ -13,6 +13,7 @@ public enum PaletteCatalog {
             PaletteItem(.newNote, "New Note", symbol: "plus", shortcut: ["⌘", "N"], keywords: ["create", "add"]),
             PaletteItem(.newWindow, "New Note in Window", symbol: "macwindow.badge.plus", shortcut: ["⌥", "⌘", "N"], keywords: ["open"]),
             PaletteItem(.duplicate, "Duplicate Note", symbol: "plus.square.on.square", shortcut: ["⌘", "D"], keywords: ["clone"]),
+            PaletteItem(.overview, "All Notes", symbol: "square.grid.2x2", shortcut: ["⇧", "⌘", "O"], keywords: ["grid", "overview", "everything"]),
             PaletteItem(.browse, "Browse Notes", symbol: "rectangle.on.rectangle.angled", shortcut: ["⌘", "P"], keywords: ["search", "open", "all"]),
             PaletteItem(.previousNote, "Previous Note", symbol: "chevron.backward", shortcut: ["⌥", "⌘", "←"], keywords: ["swipe", "newer"], isEnabled: context.hasPrevious, group: 1),
             PaletteItem(.nextNote, "Next Note", symbol: "chevron.forward", shortcut: ["⌥", "⌘", "→"], keywords: ["swipe", "older"], isEnabled: context.hasNext, group: 1),
