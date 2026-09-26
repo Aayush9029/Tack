@@ -41,6 +41,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
     <key>NSPrincipalClass</key><string>NSApplication</string>
     <key>NSHighResolutionCapable</key><true/>
+    <key>LSUIElement</key><true/>
     <key>ATSApplicationFontsPath</key><string>Fonts</string>
     <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Aayush Pokharel. MIT License.</string>
     <key>GitCommit</key><string>${GIT_COMMIT}</string>

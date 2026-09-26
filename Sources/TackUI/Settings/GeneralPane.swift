@@ -22,7 +22,7 @@ struct GeneralPane: View {
 
                     ToggleCard(
                         title: "Show in Dock",
-                        description: "Adds a Dock icon and an app switcher entry.",
+                        description: "Adds a Dock icon and an entry in the ⌘Tab app switcher. Off, Tack lives in the menu bar.",
                         icon: "dock.rectangle",
                         isOn: preferences.showsDockIcon,
                         action: { preferences.$showsDockIcon.withLock { $0.toggle() } }
