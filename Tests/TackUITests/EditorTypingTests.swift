@@ -115,6 +115,14 @@ struct EditorTypingTests {
         #expect(editor.caret == 8)
     }
 
+    @Test func bulletsDoNotResizeInlineCode() async {
+        let editor = Harness(focus: false)
+        await editor.type("- item\nuse `code` here")
+        let codeIndex = (editor.text as NSString).range(of: "code").location
+        #expect(editor.font(at: codeIndex)?.pointSize == editor.styler.theme.codeFont.pointSize)
+        #expect(editor.styler.theme.codeFont.pointSize != editor.styler.theme.bulletFont.pointSize)
+    }
+
     @Test func listsContinueAndEnd() async {
         let editor = Harness(focus: false)
         await editor.type("- [ ] milk\neggs\n\nafter")

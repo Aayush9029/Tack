@@ -131,7 +131,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         if noteWindows.isEmpty {
             app.launch().forEach(open)
         } else {
-            noteWindows.forEach { $0.window?.orderFront(nil) }
+            noteWindows.forEach { controller in
+                controller.lift()
+                controller.window?.orderFront(nil)
+            }
             noteWindows.first?.window?.makeKey()
         }
     }

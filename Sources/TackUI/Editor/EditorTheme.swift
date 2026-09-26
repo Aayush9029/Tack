@@ -40,7 +40,7 @@ final class EditorTheme {
     }
 
     func font(bold: Bool, italic: Bool, scale: CGFloat = 1) -> NSFont {
-        let key = FontKey(bold: bold, italic: italic, scale: scale, code: false)
+        let key = FontKey(bold: bold, italic: italic, scale: scale, role: .text)
         if let font = fonts[key] { return font }
         let pointSize = (size * scale).rounded()
         let upright = NSFont.systemFont(ofSize: pointSize, weight: bold ? .semibold : .regular)
@@ -59,7 +59,7 @@ final class EditorTheme {
     }
 
     var codeFont: NSFont {
-        let key = FontKey(bold: false, italic: false, scale: 1, code: true)
+        let key = FontKey(bold: false, italic: false, scale: 1, role: .code)
         if let font = fonts[key] { return font }
         let pointSize = (size * (family == .system ? 0.9 : 0.94)).rounded()
         let font = family == .system
@@ -75,7 +75,7 @@ final class EditorTheme {
     var hiddenFont: NSFont { monospaced(scale: 0.07) }
 
     private func monospaced(scale: CGFloat) -> NSFont {
-        let key = FontKey(bold: false, italic: false, scale: scale, code: true)
+        let key = FontKey(bold: false, italic: false, scale: scale, role: .marker)
         if let font = fonts[key] { return font }
         let font = NSFont.monospacedSystemFont(ofSize: max(1, (size * scale).rounded()), weight: .regular)
         fonts[key] = font
@@ -83,7 +83,7 @@ final class EditorTheme {
     }
 
     var captionFont: NSFont {
-        let key = FontKey(bold: false, italic: false, scale: 0.75, code: true)
+        let key = FontKey(bold: false, italic: false, scale: 0.75, role: .caption)
         if let font = fonts[key] { return font }
         let font = NSFont.monospacedSystemFont(ofSize: max(10, (size * 0.72).rounded()), weight: .regular)
         fonts[key] = font
@@ -141,7 +141,14 @@ final class EditorTheme {
         let bold: Bool
         let italic: Bool
         let scale: CGFloat
-        let code: Bool
+        let role: Role
+
+        enum Role {
+            case text
+            case code
+            case marker
+            case caption
+        }
     }
 
     private struct WidthKey: Hashable {

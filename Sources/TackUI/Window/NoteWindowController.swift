@@ -59,6 +59,7 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             NoteRootView(model: model, preferences: app.preferences, window: state, proxy: proxy, actions: actions)
         )
         window.delegate = self
+        NotificationCenter.default.addObserver(self, selector: #selector(settle), name: NSApplication.didResignActiveNotification, object: nil)
         window.onCancel = { [weak self] in self?.escapePressed() }
 
         let swipe = SwipeTracker(window: window, state: state)
@@ -91,15 +92,37 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     // MARK: Model to window
 
+    /// Desktop widgets: an unpinned note sits on the desktop, under every window, so
+    /// no window can bury it and Show Desktop always shows it. While Tack is in use the
+    /// note rises above other windows, and it settles back when another app takes over.
+    private static let desktopLevel = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
+
+    private var isLifted = false
+
     private func applyPinned(_ isPinned: Bool) {
         guard let window else { return }
-        window.level = isPinned || model.isFocusMode ? .floating : .normal
-        // Transient: Mission Control hides notes altogether, and ⌘` skips them, the way
-        // the app stays out of the Dock and ⌘Tab.
+        applyLevel()
         window.collectionBehavior = isPinned
             ? [.transient, .canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
-            : [.transient, .ignoresCycle]
+            : [.stationary, .canJoinAllSpaces, .ignoresCycle]
         app.syncRecords()
+    }
+
+    private func applyLevel() {
+        window?.level = model.isPinned || model.isFocusMode || isLifted ? .floating : Self.desktopLevel
+    }
+
+    /// Above other windows until Tack stops being the active app.
+    func lift() {
+        guard !isLifted else { return }
+        isLifted = true
+        applyLevel()
+    }
+
+    @objc private func settle() {
+        guard isLifted else { return }
+        isLifted = false
+        applyLevel()
     }
 
     private func applyTheme(_ theme: NoteTheme) {
@@ -337,6 +360,7 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     func windowDidBecomeKey(_ notification: Notification) {
         state.isKey = true
+        lift()
     }
 
     func windowDidResignKey(_ notification: Notification) {

@@ -32,7 +32,7 @@ Releases are built, signed, notarized and uploaded by `.local/scripts/release.sh
 - The editor restyles only the edited paragraphs and continues only while the open-code-fence state changes, carried in `.tackEndsInCode`.
 - Checkboxes, bullets, code boxes, quote bars, rules and media previews are drawn by `NoteLayoutFragment`; the Markdown characters stay in the text. Task markers use a monospaced font so `[x]` and `[ ]` have one width.
 - A change of `textContainerInset` needs a full layout invalidation, or TextKit 2 draws fragments where the old inset put them.
-- Note windows are borderless so no system frame or hairline shows; the traffic lights are drawn in SwiftUI and green is focus mode.
+- Note windows are borderless so no system frame or hairline shows; the only window button is a close button drawn in SwiftUI.
 - One corner radius (`Metrics.windowRadius`) and one inset make every corner control concentric.
 - The palette window is sized from its rows (`PaletteMetrics`), not from SwiftUI's measured height, which clipped the field.
 - A plain-text `NSTextView` disables Paste for an image-only clipboard; `validateUserInterfaceItem` turns it back on.
