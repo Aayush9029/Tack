@@ -2,7 +2,6 @@ import Foundation
 
 /// What Return does at the end of a list item or quote.
 public enum ListContinuation: Equatable, Sendable {
-    /// Start the next item with this prefix.
     case continueWith(String)
     /// The item was empty: remove its marker and end the list.
     case endList

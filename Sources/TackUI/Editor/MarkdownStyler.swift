@@ -17,9 +17,9 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
         self.theme = theme
     }
 
-    /// Characters edited since the last restyle. Styling inside the edit itself would
-    /// widen the range TextKit 2 remaps the selection through, and the insertion
-    /// point would jump to its end, so edits are only recorded here.
+    /// Characters edited since the last restyle. A restyle inside the edit widens the
+    /// range TextKit 2 remaps the selection through, and the insertion point jumps
+    /// to its end. So an edit is only recorded here.
     private var pending: NSRange?
 
     nonisolated func textStorage(
@@ -95,8 +95,8 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
         storage.endEditing()
     }
 
-    /// An edit that ends in a newline split a paragraph; the new one after it keeps
-    /// the old paragraph's styling until it is restyled too.
+    /// An edit that ends in a newline splits a paragraph. The new paragraph keeps
+    /// the old style until it is restyled too.
     private func restyle(_ storage: NSTextStorage, around range: NSRange) {
         let string = storage.string as NSString
         var range = range

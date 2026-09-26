@@ -20,9 +20,8 @@ final class NoteTextView: NSTextView {
     var onRestyle: (NSTextStorage) -> Void = { _ in }
     var onColumnWidthChange: (CGFloat) -> Void = { _ in }
 
-    /// Work that resizes, relays out or scrolls. It waits for the end of the current
-    /// event, because doing it inside an edit or a layout pass re-enters AppKit's
-    /// layout and throws.
+    /// Work that resizes, lays out or scrolls. It waits for the end of the current
+    /// event: inside an edit or a layout pass it re-enters AppKit layout and throws.
     struct Refresh: OptionSet {
         let rawValue: Int
         static let layout = Refresh(rawValue: 1 << 0)
@@ -48,7 +47,7 @@ final class NoteTextView: NSTextView {
     private func performRefresh() {
         let refresh = pendingRefresh
         pendingRefresh = []
-        // Styled after the edit settles, with the selection held: an attribute-only
+        // Styled after the edit settles, with the selection held. An attribute-only
         // edit makes TextKit 2 remap the insertion point through the restyled range.
         if refresh.contains(.style), let textStorage {
             preservingSelection { onRestyle(textStorage) }
@@ -137,8 +136,8 @@ final class NoteTextView: NSTextView {
             }
         }
         onColumnWidthChange(max(120, viewport.width - inset.width * 2 - hang))
-        // The first layout can run while SwiftUI still has the editor at a smaller size;
-        // without this the lines that come into view on growing stay undrawn.
+        // The first layout can run while SwiftUI still has the editor at a smaller size.
+        // Without this, lines that come into view on growth stay undrawn.
         textLayoutManager?.textViewportLayoutController.layoutViewport()
     }
 

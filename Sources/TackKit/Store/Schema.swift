@@ -14,8 +14,8 @@ public extension DependencyValues {
     }
 
     /// `TACK_DATABASE` points the app or the command line tool at another file, for
-    /// tests and scripts. Otherwise an explicit path: the library default is a
-    /// Mac-wide SQLiteData.db that any other SQLiteData app shares.
+    /// tests and scripts. The path is explicit because the library default is a
+    /// Mac-wide SQLiteData.db that other SQLiteData apps share.
     static func databaseURL() throws -> URL {
         if let path = ProcessInfo.processInfo.environment["TACK_DATABASE"], !path.isEmpty {
             return URL(filePath: (path as NSString).expandingTildeInPath)

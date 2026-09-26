@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A pill track with a stop for each choice and a white knob, after ChatGPT's model
-/// picker. Dragging moves the knob freely; letting go snaps it to the nearest stop.
+/// picker. A drag moves the knob freely; a release snaps it to the nearest stop.
 struct StopSlider: View {
     let count: Int
     let index: Int

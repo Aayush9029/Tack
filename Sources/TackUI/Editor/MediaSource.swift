@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 
 enum MediaSource {
     /// Pasted media lives under Attachments and is written as `attachments/<name>`,
-    /// so a note stays short and survives the Application Support path changing.
+    /// so a note stays short and survives a change of the Application Support path.
     static func url(for source: String) -> URL? {
         let decoded = source.removingPercentEncoding ?? source
         if decoded.hasPrefix("attachments/") {

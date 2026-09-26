@@ -1,7 +1,7 @@
 import AppKit
 
-/// iA Writer's caret: a blue bar a little wider than the system's, which holds
-/// still while typing and only starts to blink when the writer pauses.
+/// iA Writer's caret: a blue bar a little wider than the system's. It holds still
+/// while typing and blinks only when the writer pauses.
 final class CaretView: NSView {
     override init(frame: NSRect) {
         super.init(frame: frame)

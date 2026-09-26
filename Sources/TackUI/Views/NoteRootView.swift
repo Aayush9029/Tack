@@ -95,8 +95,8 @@ struct NoteRootView: View {
         1 - min(abs(window.swipeOffset) / 420, 0.5)
     }
 
-    /// A new note arrives from the side it was asked for; a swipe that already moved
-    /// the old one away hands over from where the fingers left it.
+    /// A new note arrives from the side it was asked for. After a swipe moved the old
+    /// note away, the new one starts where the fingers left it.
     private func slideIn(_ direction: NavigationDirection) {
         guard direction != .none else { return }
         var transaction = Transaction()

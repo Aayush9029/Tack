@@ -8,8 +8,8 @@ final class NoteWindow: NSWindow {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
 
-    /// Sticky notes are desktop furniture, not documents: a floating window is left out
-    /// of the window lists that switchers such as Raycast build from Accessibility.
+    /// Sticky notes are desktop furniture, not documents. Switchers such as Raycast
+    /// build window lists from Accessibility and leave floating windows out.
     override func accessibilitySubrole() -> NSAccessibility.Subrole? {
         .floatingWindow
     }

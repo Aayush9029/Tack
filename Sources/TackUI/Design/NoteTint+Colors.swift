@@ -17,8 +17,7 @@ extension NoteTint {
         }
     }
 
-    /// Classic is paper in either appearance, and without a tint it is the yellow note
-    /// everyone pictures.
+    /// Classic is paper in both appearances. Without a tint it is the yellow note.
     private var classic: NoteTint { self == .none ? .yellow : self }
 
     var classicBody: NSColor {

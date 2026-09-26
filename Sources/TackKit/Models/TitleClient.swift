@@ -4,7 +4,7 @@ import Foundation
 import FoundationModels
 
 /// Names a note from its text with the on-device model. Returns nil when Apple
-/// Intelligence is off, still downloading, or the note is not in a supported language.
+/// Intelligence is off or not downloaded, or when the note's language is not supported.
 @DependencyClient
 public struct TitleClient: Sendable {
     public var suggest: @Sendable (_ body: String) async throws -> String?

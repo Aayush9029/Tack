@@ -34,15 +34,13 @@ public final class NoteWindowModel: Identifiable {
     @DebugSnapshotIgnored public var palette: PaletteModel?
     public var isRenaming = false
 
-    /// Kept out of observation: the editor owns the live text, and nothing in SwiftUI
-    /// should re-render per keystroke.
+    /// The editor owns the live text. SwiftUI must not re-render on each keystroke.
     @ObservationIgnored public private(set) var body: String
     @ObservationIgnored private var createdAt: Date
-    /// The body as the store last had it. Typing is unsaved while `body` differs,
-    /// which a save only settles once its write has landed.
+    /// The body the store last had. Typing is unsaved while `body` differs, until a save writes it.
     @ObservationIgnored private var savedBody: String
     @ObservationIgnored private var saveTask: Task<Void, Never>?
-    /// The start of the body the inferred title was made from, so it is only redone when that changes.
+    /// The start of the body the inferred title came from. A new title is asked only when it changes.
     @ObservationIgnored private var inferredFrom = ""
     @ObservationIgnored private var titleGeneration = 0
 
@@ -119,7 +117,7 @@ public final class NoteWindowModel: Identifiable {
         await inferTitleIfNeeded(id: id, body: body)
     }
 
-    /// A save that drops most of a note is worth a line in the log when data goes missing.
+    /// Logs a save that drops most of a note, for when data goes missing.
     private func logIfShrinking() {
         let (before, after) = (savedBody.utf16.count, body.utf16.count)
         guard before > 80, after < before * 3 / 4 else { return }
@@ -135,8 +133,8 @@ public final class NoteWindowModel: Identifiable {
         if title != displayTitle { displayTitle = title }
     }
 
-    /// Asks the on-device model for a title once typing has paused, and only when
-    /// the first line would make a poor one and has changed since the last ask.
+    /// Asks the on-device model for a title after typing pauses, only when the first
+    /// line makes a poor title and changed since the last ask.
     private func inferTitleIfNeeded(id: Note.ID, body: String) async {
         guard infersTitles, customTitle.isEmpty, NoteText.wantsInferredTitle(body) else { return }
         let sample = String(body.prefix(1200))
@@ -161,7 +159,7 @@ public final class NoteWindowModel: Identifiable {
         onNoteChanged()
     }
 
-    /// Writes pending text now: before switching notes, closing, or quitting.
+    /// Writes unsaved text now: before a switch of notes, a close, or a quit.
     public func flush() {
         saveTask?.cancel()
         saveTask = nil
