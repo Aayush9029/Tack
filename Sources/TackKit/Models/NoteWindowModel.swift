@@ -99,6 +99,7 @@ public final class NoteWindowModel: Identifiable {
 
     public func save() async {
         guard isDirty else { return }
+        logIfShrinking()
         let state = Log.signposter.beginInterval("Save note")
         defer { Log.signposter.endInterval("Save note", state) }
         let (id, body, now) = (noteID, body, now)
@@ -116,6 +117,13 @@ public final class NoteWindowModel: Identifiable {
         savedBody = body
         onNoteChanged()
         await inferTitleIfNeeded(id: id, body: body)
+    }
+
+    /// A save that drops most of a note is worth a line in the log when data goes missing.
+    private func logIfShrinking() {
+        let (before, after) = (savedBody.utf16.count, body.utf16.count)
+        guard before > 80, after < before * 3 / 4 else { return }
+        Log.database.notice("Saving \(self.noteID.rawValue, privacy: .public) shrinks it from \(before) to \(after) characters")
     }
 
     private static func inferenceKey(_ body: String) -> String {
@@ -158,6 +166,7 @@ public final class NoteWindowModel: Identifiable {
         saveTask?.cancel()
         saveTask = nil
         guard isDirty else { return }
+        logIfShrinking()
         let (id, body, now) = (noteID, body, now)
         let saved = withErrorReporting {
             try database.write { db in

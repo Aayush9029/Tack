@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  Glass sticky notes for the Mac, written in Markdown.
+  High-performance sticky notes for the Mac.
 </p>
 
 <p align="center">
@@ -17,8 +17,15 @@
 </p>
 
 <p align="center">
-  <img src="assets/readme/banner.jpg" width="100%" alt="A Tack note in Liquid Glass with a checklist, a quote and a link">
+  <img src="assets/readme/banner.jpg" width="100%" alt="A pink Tack sticky note with a Saturday checklist">
 </p>
+
+## Features
+
+- Liquid Glass or classic paper notes, each with its own tint, that float above your windows when pinned.
+- Checklists, headings, links, code, images and video, styled as you type.
+- ⌘K for every command, a swipe to flip between notes, and a full-screen focus mode.
+- A `tack` command, so scripts and agents can read and write your notes.
 
 ## Install
 

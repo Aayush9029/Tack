@@ -137,6 +137,9 @@ final class NoteTextView: NSTextView {
             }
         }
         onColumnWidthChange(max(120, viewport.width - inset.width * 2 - hang))
+        // The first layout can run while SwiftUI still has the editor at a smaller size;
+        // without this the lines that come into view on growing stay undrawn.
+        textLayoutManager?.textViewportLayoutController.layoutViewport()
     }
 
     // MARK: Caret
