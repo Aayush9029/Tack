@@ -3,8 +3,8 @@ import Testing
 @testable import TackUI
 
 @MainActor
-@Suite struct ViewportProbe {
-    @Test func lastParagraphIsLaidOutInAShortNote() async throws {
+@Suite struct ViewportTests {
+    @Test func aShortNoteIsLaidOutToItsLastLine() async throws {
         let body = "# Saturday\nFarmers market first, then errands.\n\n- [x] Pick up dry cleaning\n- [x] Call mom back\n- [ ] Oat milk, eggs, basil\n- [ ] Book the dentist for next week\n\nDinner at **Nora's** at 7:30. Bring the *good* wine.\n\n> Charger in the bag this time."
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 320), styleMask: [.borderless], backing: .buffered, defer: false)
         let textView = NoteTextView.make()
@@ -26,8 +26,9 @@ import Testing
             fragments.append(fragment.layoutFragmentFrame)
             return true
         }
-        let viewport = manager.textViewportLayoutController.viewportRange.map { manager.offset(from: $0.location, to: $0.endLocation) } ?? -1
-        print("PROBE viewport \(viewport) of \((body as NSString).length); text view \(textView.frame); last fragment \(fragments.last ?? .zero); usage \(manager.usageBoundsForTextContainer)")
+        let viewport = try #require(manager.textViewportLayoutController.viewportRange)
+        #expect(manager.offset(from: viewport.location, to: viewport.endLocation) == (body as NSString).length)
+        #expect((fragments.last?.maxY ?? .infinity) + textView.textContainerInset.height <= textView.frame.height)
         withExtendedLifetime(window) {}
     }
 }
