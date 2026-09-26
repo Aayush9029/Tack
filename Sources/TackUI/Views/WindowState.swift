@@ -14,5 +14,4 @@ final class WindowState {
 enum SwipeEdge: Equatable {
     case previous
     case next
-    case blocked
 }

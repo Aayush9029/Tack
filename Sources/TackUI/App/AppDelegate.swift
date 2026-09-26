@@ -4,7 +4,7 @@ import SwiftUI
 import TackKit
 
 @MainActor
-public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
+public final class AppDelegate: NSObject, NSApplicationDelegate {
     let app = AppModel()
 
     override public init() {
@@ -177,10 +177,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValid
         settingsWindow = window
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
-    }
-
-    public func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        true
     }
 
     // MARK: Menu bar

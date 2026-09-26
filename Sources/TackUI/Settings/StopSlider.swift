@@ -5,7 +5,7 @@ import SwiftUI
 struct StopSlider: View {
     let count: Int
     let index: Int
-    var tint: [Color] = [Color(red: 0.62, green: 0.44, blue: 1.0), Color(red: 0.50, green: 0.30, blue: 0.95)]
+    let tint: [Color]
     var onPreview: (Int?) -> Void = { _ in }
     let onCommit: (Int) -> Void
 

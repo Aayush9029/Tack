@@ -24,9 +24,4 @@ final class EditorProxy {
         item.tag = NSTextFinder.Action.showFindInterface.rawValue
         textView?.performTextFinderAction(item)
     }
-
-    func selectAllAndFocus() {
-        focus()
-        textView?.setSelectedRange(NSRange(location: textView?.string.utf16.count ?? 0, length: 0))
-    }
 }

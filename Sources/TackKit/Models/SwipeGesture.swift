@@ -38,8 +38,6 @@ public struct SwipeGesture: Equatable, Sendable {
 
     public init() {}
 
-    public var isTracking: Bool { axis == .horizontal }
-
     /// `dx` is in finger direction: positive when the fingers move right.
     public mutating func handle(_ phase: Phase, dx: CGFloat = 0, dy: CGFloat = 0, canSwipe: (Direction) -> Bool) -> Outcome {
         switch phase {

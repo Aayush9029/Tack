@@ -1,4 +1,3 @@
-import Tagged
 import CasePaths
 
 @CasePathable

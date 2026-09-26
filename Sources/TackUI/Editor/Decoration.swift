@@ -18,7 +18,6 @@ final class Decoration: NSObject {
         case codeTop
         case code
         case codeBottom
-        case codeSingle
         case rule
         case media(URL, height: CGFloat)
     }
@@ -41,7 +40,6 @@ final class Decoration: NSObject {
         case .codeTop: 3
         case .code: 4
         case .codeBottom: 5
-        case .codeSingle: 6
         case .rule: 7
         case let .media(url, height): url.hashValue ^ Int(height)
         }

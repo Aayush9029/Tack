@@ -1,4 +1,3 @@
-import Tagged
 public enum WelcomeNote {
     public static let body = """
     # Welcome to Tack

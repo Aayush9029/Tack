@@ -23,7 +23,7 @@ final class NoteLayoutFragment: NSTextLayoutFragment {
         let bounds = super.renderingSurfaceBounds
         guard let decoration else { return bounds }
         switch decoration {
-        case .code, .codeTop, .codeBottom, .codeSingle, .rule, .quote:
+        case .code, .codeTop, .codeBottom, .rule, .quote:
             return bounds.union(CGRect(x: -10, y: 0, width: containerWidth + 20, height: layoutFragmentFrame.height))
         case .media:
             return bounds.union(mediaRect ?? .zero).union(CGRect(x: 0, y: 0, width: containerWidth, height: layoutFragmentFrame.height))
@@ -102,11 +102,9 @@ final class NoteLayoutFragment: NSTextLayoutFragment {
         let path: CGPath
         switch decoration {
         case .codeTop:
-            path = Self.roundedPath(box.insetBy(dx: 0, dy: 0).offsetBy(dx: 0, dy: 2).insetBy(dx: 0, dy: 0), top: radius, bottom: 0)
+            path = Self.roundedPath(box.offsetBy(dx: 0, dy: 2), top: radius, bottom: 0)
         case .codeBottom:
             path = Self.roundedPath(CGRect(x: box.minX, y: box.minY, width: box.width, height: box.height - 2), top: 0, bottom: radius)
-        case .codeSingle:
-            path = Self.roundedPath(box.insetBy(dx: 0, dy: 2), top: radius, bottom: radius)
         case .code:
             path = CGPath(rect: box, transform: nil)
         default:
@@ -177,7 +175,7 @@ final class NoteLayoutFragment: NSTextLayoutFragment {
             guard let rect = mediaRect else { return }
             drawMedia(url, in: rect, context: context)
 
-        case .code, .codeTop, .codeBottom, .codeSingle:
+        case .code, .codeTop, .codeBottom:
             break
         }
     }

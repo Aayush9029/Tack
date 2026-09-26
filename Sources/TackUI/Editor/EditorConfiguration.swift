@@ -9,9 +9,7 @@ struct EditorConfiguration: Equatable {
     var isTypewriter: Bool
     var dimsParagraphs: Bool
     var checksSpelling: Bool
-}
 
-extension EditorConfiguration {
     var family: EditorFont { isFocusMode ? focusFont : noteFont }
     var pointSize: CGFloat { CGFloat(isFocusMode ? size + 3 : size) }
 }

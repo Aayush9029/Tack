@@ -1,4 +1,3 @@
-import Tagged
 public enum PaletteCatalog {
     public static func items(on page: PalettePage, in context: PaletteContext) -> [PaletteItem] {
         switch page {

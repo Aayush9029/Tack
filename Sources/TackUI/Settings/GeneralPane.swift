@@ -17,7 +17,7 @@ struct GeneralPane: View {
                         isOn: launchAtLogin.isEnabled,
                         action: { launchAtLogin.set(!launchAtLogin.isEnabled) }
                     ) {
-                        AnimatedImage(resource: SettingsIllustration.launchAtLogin)
+                        AnimatedImage(resource: "launch-at-login")
                     }
 
                     ToggleCard(
@@ -27,7 +27,7 @@ struct GeneralPane: View {
                         isOn: preferences.showsDockIcon,
                         action: { preferences.$showsDockIcon.withLock { $0.toggle() } }
                     ) {
-                        AnimatedImage(resource: SettingsIllustration.dockIcon)
+                        AnimatedImage(resource: "dock-icon")
                     }
 
                     ToggleCard(
