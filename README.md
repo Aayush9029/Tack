@@ -25,7 +25,7 @@
 - Liquid Glass or classic paper notes, each with its own tint, that float above your windows when pinned.
 - Checklists, headings, links, code, images and video, styled as you type.
 - ⌘K for every command, a swipe to flip between notes, a grid of every note, and a full-screen focus mode.
-- A `tack` command, so scripts and agents can read and write your notes.
+- A `tack` command and `tack://` links, so scripts and agents can read and write your notes, and a one-step import of your Raycast Notes.
 
 ## Install
 

@@ -16,7 +16,7 @@ struct TackCommand: ParsableCommand {
         """,
         subcommands: [
             List.self, Search.self, Show.self, Add.self, Edit.self, Tasks.self,
-            Check.self, Uncheck.self, Delete.self, Export.self, Import.self, Where.self,
+            Check.self, Uncheck.self, Delete.self, Export.self, Import.self, ImportRaycast.self, Where.self,
         ]
     )
 
@@ -34,6 +34,9 @@ struct TackCommand: ParsableCommand {
         do {
             var command = try parseAsRoot()
             try command.run()
+        } catch let failure as RaycastExport.Failure {
+            FileHandle.standardError.write(Data("tack: \(failure)\n".utf8))
+            Foundation.exit(1)
         } catch let failure as NoteStore.Failure {
             FileHandle.standardError.write(Data("tack: \(failure)\n".utf8))
             Foundation.exit(1)

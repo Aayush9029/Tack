@@ -58,6 +58,10 @@ struct GeneralPane: View {
             }
 
             CommandLineSection()
+
+            if RaycastSection.isRaycastInstalled {
+                RaycastSection(theme: preferences.defaultTheme)
+            }
         }
         .task { launchAtLogin.refresh() }
     }

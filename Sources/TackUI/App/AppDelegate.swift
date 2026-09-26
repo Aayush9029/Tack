@@ -161,6 +161,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// so the desktop does not fill with windows. ⌘-click asks for a window of its own.
     private func overviewOpened(_ id: Note.ID, inNewWindow: Bool) {
         overview?.dismiss()
+        bringUp(id, inNewWindow: inNewWindow)
+    }
+
+    private func bringUp(_ id: Note.ID, inNewWindow: Bool) {
         if let window = app.window(showing: id), let controller = controllers[window.id] {
             controller.show()
         } else if !inNewWindow, let controller = lastUsedWindow.flatMap({ controllers[$0] }) ?? controllers.values.first {
@@ -168,6 +172,43 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             controller.show()
         } else if let model = app.openButtonTapped(id) {
             open(model)
+        }
+    }
+
+    // MARK: Links
+
+    public func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            guard let link = TackLink(url) else {
+                Log.database.notice("Ignored a link Tack does not know: \(url.absoluteString, privacy: .private)")
+                continue
+            }
+            follow(link)
+        }
+    }
+
+    private func follow(_ link: TackLink) {
+        NSApp.activate()
+        let store = NoteStore()
+        switch link {
+        case let .new(text, style, tint):
+            var theme = app.preferences.defaultTheme
+            if let style { theme.style = style }
+            if let tint { theme.tint = tint }
+            guard let note = (withErrorReporting { try store.add(body: text, theme: theme) }) else { return }
+            bringUp(note.id, inNewWindow: true)
+        case let .open(reference):
+            guard let note = (withErrorReporting { try store.resolve(reference) }) else { return }
+            bringUp(note.id, inNewWindow: false)
+        case let .append(reference, text):
+            app.windows.forEach { $0.flush() }
+            guard let note = (withErrorReporting {
+                try store.modify(store.resolve(reference).id) { $0.body = $0.body.isEmpty ? text : $0.body + "\n" + text }
+            }) else { return }
+            bringUp(note.id, inNewWindow: false)
+        case let .all(query):
+            if overview == nil { showOverview(nil) }
+            overview?.model.queryChanged(query)
         }
     }
 

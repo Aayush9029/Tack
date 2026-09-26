@@ -45,6 +45,12 @@ Releases are built, signed, notarized and uploaded by `.local/scripts/release.sh
 - Settings' Style, Tint and Appearance change every note (`AppModel.lookChanged`); the title menu changes one.
 - A title is inferred with Foundation Models only when the first line is long or a list item (`NoteText.wantsInferredTitle`), after a save, once per change of the note's start.
 
+## Raycast and links
+
+- `RaycastExport` reads Raycast's `.rayconfig` (schema 3): `RAYCFG3\n`, a UInt32LE header length, a gzipped JSON header with hex `salt` and `iv`, then AES-256-GCM (16-byte tag at the end) over a gzipped JSON payload. The key is scrypt(password, salt, N=16384, r=8, p=1, 32). `Scrypt` implements RFC 7914 because CryptoKit has none; tests check it against the RFC vectors. `Tests/TackKitTests/Fixtures/two-notes.rayconfig` is a made-up export with the password `test`.
+- `RaycastImport` skips notes whose body is already in Tack and keeps Raycast's dates. Settings > General shows the import only when Raycast (`com.raycast.macos`) is installed; `tack import-raycast <file>` does the same from a terminal.
+- `tack://new?text=&style=&tint=`, `tack://open?note=`, `tack://append?note=&text=`, `tack://all?q=` (`TackLink`), registered in `Info.plist` by `Scripts/package_app.sh`.
+
 ## Measured (M-series, release, `TACK_BENCH=1`)
 
 - A keystroke: about 1.6 ms (insert 0.8, restyle 0.1, viewport layout 0.7), the same in 200 and 2000 lines. A benchmark window must stay alive: without one the viewport is infinite and every keystroke lays out the whole note.

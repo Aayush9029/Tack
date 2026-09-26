@@ -64,7 +64,8 @@ let package = Package(
                 .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "DebugSnapshots", package: "swift-debug-snapshots"),
-            ]
+            ],
+            resources: [.copy("Fixtures")]
         ),
         .testTarget(
             name: "TackUITests",

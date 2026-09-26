@@ -42,6 +42,13 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>NSPrincipalClass</key><string>NSApplication</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>LSUIElement</key><true/>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key><string>${BUNDLE_ID}</string>
+            <key>CFBundleURLSchemes</key><array><string>tack</string></array>
+        </dict>
+    </array>
     <key>ATSApplicationFontsPath</key><string>Fonts</string>
     <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Aayush Pokharel. MIT License.</string>
     <key>GitCommit</key><string>${GIT_COMMIT}</string>
