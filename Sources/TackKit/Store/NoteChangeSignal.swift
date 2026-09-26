@@ -4,7 +4,7 @@ import notify
 /// A Darwin notification between the command line tool and the app, so an open
 /// note shows a change the moment `tack` writes it.
 public enum NoteChangeSignal {
-    static let name = "ca.optimalapps.tack.notes-changed"
+    private static let name = "ca.optimalapps.tack.notes-changed"
 
     public static func post() {
         notify_post(name)

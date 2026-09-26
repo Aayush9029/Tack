@@ -124,7 +124,7 @@ public enum MarkdownParser {
 
     // MARK: Inline
 
-    static func inlineSpans(_ line: NSString, from start: Int) -> [MarkdownSpan] {
+    private static func inlineSpans(_ line: NSString, from start: Int) -> [MarkdownSpan] {
         guard start < line.length else { return [] }
         let whole = NSRange(location: start, length: line.length - start)
         var spans: [MarkdownSpan] = []

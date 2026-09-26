@@ -43,7 +43,6 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
         let proxy = self.proxy
         let state = self.state
-        var actions = NoteWindowActions(close: {}, escape: {})
         let hosting = NSHostingView(rootView: AnyView(EmptyView()))
         // The window sizes the content. Without this the hosting view re-derives its
         // minimum, maximum and intrinsic sizes on every update.
@@ -52,7 +51,7 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         window.contentView = glass
         super.init(window: window)
 
-        actions = NoteWindowActions(
+        let actions = NoteWindowActions(
             close: { [weak window] in window?.performClose(nil) },
             escape: { [weak self] in self?.escapePressed() }
         )
@@ -73,11 +72,13 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         swipe.install()
         self.swipe = swipe
 
-        observe { model.isPinned } apply: { [weak self] in self?.applyPinned($0) }
-        observe { model.theme } apply: { [weak self] in self?.applyTheme($0) }
-        observe { model.isFocusMode } apply: { [weak self] in self?.applyFocusMode($0) }
-        observe { model.palette.map(ObjectIdentifier.init) } apply: { [weak self] _ in self?.applyPalette() }
-        observe { model.displayTitle } apply: { [weak window] in window?.title = $0 }
+        observers = [
+            .observing { model.isPinned } apply: { [weak self] in self?.applyPinned($0) },
+            .observing { model.theme } apply: { [weak self] in self?.applyTheme($0) },
+            .observing { model.isFocusMode } apply: { [weak self] in self?.applyFocusMode($0) },
+            .observing { model.palette.map(ObjectIdentifier.init) } apply: { [weak self] _ in self?.applyPalette() },
+            .observing { model.displayTitle } apply: { [weak window] in window?.title = $0 },
+        ]
     }
 
     required init?(coder: NSCoder) { nil }
@@ -86,17 +87,6 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         showWindow(nil)
         window?.makeKeyAndOrderFront(nil)
         proxy.focus()
-    }
-
-    private func observe<Value: Equatable & Sendable>(
-        _ value: @escaping @MainActor @Sendable () -> Value,
-        apply: @escaping @MainActor (Value) -> Void
-    ) {
-        observers.append(Task { @MainActor in
-            for await current in Observations(value) {
-                apply(current)
-            }
-        })
     }
 
     // MARK: Model to window
@@ -164,7 +154,7 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     // MARK: Commands
 
-    func perform(_ command: NoteCommand) {
+    private func perform(_ command: NoteCommand) {
         model.dismissPalette()
         switch command {
         case .newNote:

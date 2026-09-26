@@ -380,7 +380,7 @@ public final class NoteWindowModel: Identifiable {
         }
     }
 
-    public func refreshNeighbors() async {
+    private func refreshNeighbors() async {
         let (id, createdAt, excluded) = (noteID, createdAt, otherOpenNoteIDs().union([noteID]))
         let result = await withErrorReporting {
             try await database.read { db in

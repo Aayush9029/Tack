@@ -29,7 +29,7 @@ extension TitleClient: DependencyKey {
 
     public static let testValue = TitleClient()
 
-    static func clean(_ title: String) -> String? {
+    private static func clean(_ title: String) -> String? {
         let cleaned = title
             .trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: "\"'“”‘’.#*")))
         guard !cleaned.isEmpty else { return nil }

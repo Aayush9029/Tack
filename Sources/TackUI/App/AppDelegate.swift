@@ -6,24 +6,26 @@ import TackKit
 @MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
     let app = AppModel()
-
-    override public init() {
-        super.init()
-    }
     private var controllers: [UUID: NoteWindowController] = [:]
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var observers: [Task<Void, Never>] = []
 
+    override public init() {
+        super.init()
+    }
+
     public func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = MainMenu.build()
         setUpStatusItem()
-        observe { [app] in app.preferences.showsDockIcon } apply: { showsDock in
-            NSApp.setActivationPolicy(showsDock ? .regular : .accessory)
-        }
-        observe { [app] in app.preferences.showsMenuBarIcon } apply: { [weak self] in
-            self?.statusItem?.isVisible = $0
-        }
+        observers = [
+            .observing { [app] in app.preferences.showsDockIcon } apply: { showsDock in
+                NSApp.setActivationPolicy(showsDock ? .regular : .accessory)
+            },
+            .observing { [app] in app.preferences.showsMenuBarIcon } apply: { [weak self] in
+                self?.statusItem?.isVisible = $0
+            },
+        ]
 
         NoteChangeSignal.observe { [weak self] in self?.app.notesChangedOutside() }
 
@@ -54,15 +56,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
         if !hasVisibleWindows { showAllNotes(nil) }
         return true
-    }
-
-    private func observe<Value: Equatable & Sendable>(
-        _ value: @escaping @MainActor @Sendable () -> Value,
-        apply: @escaping @MainActor (Value) -> Void
-    ) {
-        observers.append(Task { @MainActor in
-            for await current in Observations(value) { apply(current) }
-        })
     }
 
     // MARK: Windows

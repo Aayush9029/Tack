@@ -9,11 +9,14 @@ final class PaletteController: NSObject, NSWindowDelegate {
     let model: PaletteModel
     private let panel: PalettePanel
     private weak var parent: NSWindow?
-    private var height: CGFloat = 320
+    private var height: CGFloat
+    private var observer: Task<Void, Never>?
 
     init(model: PaletteModel, parent: NSWindow) {
         self.model = model
         self.parent = parent
+        let height = PaletteMetrics.height(of: Array(model.rows))
+        self.height = height
         panel = PalettePanel(
             contentRect: NSRect(x: 0, y: 0, width: Metrics.paletteWidth, height: height),
             styleMask: [.borderless, .fullSizeContentView],
@@ -31,19 +34,14 @@ final class PaletteController: NSObject, NSWindowDelegate {
         panel.delegate = self
         panel.onCancel = { [weak model] in model?.escapeKeyPressed() }
 
-        height = PaletteMetrics.height(of: Array(model.rows))
         let hosting = NSHostingView(rootView: PaletteView(model: model))
         hosting.sizingOptions = []
         panel.contentView = GlassHost.make(content: hosting, cornerRadius: Metrics.paletteRadius, size: NSSize(width: Metrics.paletteWidth, height: height))
     }
 
-    private var observer: Task<Void, Never>?
-
     func present() {
-        observer = Task { [weak self, model] in
-            for await rows in Observations({ Array(model.rows) }) {
-                self?.resize(to: PaletteMetrics.height(of: rows))
-            }
+        observer = .observing { [model] in Array(model.rows) } apply: { [weak self] rows in
+            self?.resize(to: PaletteMetrics.height(of: rows))
         }
         guard let parent else { return }
         panel.appearance = parent.appearance

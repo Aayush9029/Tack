@@ -6,7 +6,7 @@ final class NoteTextView: NSTextView {
     let fragmentContext = FragmentContext()
     private let caret = CaretView()
     private var layoutDelegate: NoteLayoutDelegate?
-    var quickLookURL: URL?
+    private var quickLookURL: URL?
 
     var isFocusMode = false {
         didSet { if oldValue != isFocusMode { setNeedsRefresh([.layout, .focus, .center]) } }
@@ -116,7 +116,7 @@ final class NoteTextView: NSTextView {
 
     /// Insets for the mode: the note's margins, or a centred column with room above
     /// and below for the caret line to sit in the middle of the screen.
-    func layoutForMode() {
+    private func layoutForMode() {
         guard let scrollView = enclosingScrollView else { return }
         let viewport = scrollView.contentView.bounds.size
         let inset: NSSize
@@ -171,7 +171,7 @@ final class NoteTextView: NSTextView {
 
     override func drawInsertionPoint(in rect: NSRect, color: NSColor, turnedOn flag: Bool) {}
 
-    func updateCaret() {
+    private func updateCaret() {
         let isActive = window?.isKeyWindow == true && window?.firstResponder === self
         guard isActive, selectedRange().length == 0, let rect = caretRect() else {
             caret.isHidden = true
@@ -182,7 +182,7 @@ final class NoteTextView: NSTextView {
     }
 
     /// Focus mode's caret is a little wider and taller, like iA Writer's.
-    func caretRect() -> CGRect? {
+    private func caretRect() -> CGRect? {
         guard let manager = textLayoutManager else { return nil }
         let offset = selectedRange().location
         let font = (typingAttributes[.font] as? NSFont) ?? self.font ?? .systemFont(ofSize: 15)
@@ -203,7 +203,7 @@ final class NoteTextView: NSTextView {
     }
 
     /// Typewriter scrolling: the line being written stays at the middle of the screen.
-    func centerCaret(animated: Bool) {
+    private func centerCaret(animated: Bool) {
         guard let rect = caretRect(), let scrollView = enclosingScrollView else { return }
         let clip = scrollView.contentView
         let target = NSPoint(x: clip.bounds.origin.x, y: max(0, (rect.midY - clip.bounds.height / 2).rounded()))
@@ -232,7 +232,7 @@ final class NoteTextView: NSTextView {
 
     // MARK: Focus
 
-    func updateFocusedParagraph(force: Bool = false) {
+    private func updateFocusedParagraph(force: Bool) {
         let focused: NSRange? = isFocusMode && dimsParagraphs
             ? (string as NSString).paragraphRange(for: NSRange(location: selectedRange().location, length: 0))
             : nil

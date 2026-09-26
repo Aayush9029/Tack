@@ -27,7 +27,7 @@ public final class PaletteModel: Identifiable {
         rebuild()
     }
 
-    public var hasSearchableNotes: Bool {
+    private var hasSearchableNotes: Bool {
         page == .notes || (page == .root && !query.trimmingCharacters(in: .whitespaces).isEmpty)
     }
 

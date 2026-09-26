@@ -48,7 +48,7 @@ public enum NoteText {
         return parts.joined(separator: " ")
     }
 
-    static func strip(_ line: some StringProtocol) -> String {
+    private static func strip(_ line: some StringProtocol) -> String {
         var text = Substring(line).drop { $0 == " " || $0 == "\t" }
         for prefix in ["- [ ] ", "- [x] ", "- [X] ", "* [ ] ", "* [x] "] where text.hasPrefix(prefix) {
             text = text.dropFirst(prefix.count)

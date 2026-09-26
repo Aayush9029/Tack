@@ -6,8 +6,8 @@ public struct SearchTuning: Equatable, Sendable {
     public var matchLimit: Int
     public var resultLimit: Int
 
-    public static let standard = Self(debounce: .milliseconds(60), matchLimit: 300, resultLimit: 40)
-    public static let lowPower = Self(debounce: .milliseconds(200), matchLimit: 120, resultLimit: 25)
+    private static let standard = Self(debounce: .milliseconds(60), matchLimit: 300, resultLimit: 40)
+    private static let lowPower = Self(debounce: .milliseconds(200), matchLimit: 120, resultLimit: 25)
 
     public static var current: Self {
         ProcessInfo.processInfo.isLowPowerModeEnabled ? .lowPower : .standard
