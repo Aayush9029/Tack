@@ -62,23 +62,3 @@ public enum PaletteCatalog {
         return true
     }
 }
-
-public extension NoteStyle {
-    var symbol: String {
-        switch self {
-        case .glass: "drop"
-        case .clear: "drop.halffull"
-        case .classic: "note"
-        }
-    }
-}
-
-public extension NoteAppearance {
-    var symbol: String {
-        switch self {
-        case .system: "circle.lefthalf.filled"
-        case .light: "sun.max"
-        case .dark: "moon"
-        }
-    }
-}

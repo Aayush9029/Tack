@@ -184,21 +184,21 @@ public enum MarkdownParser {
         }
         return spans
     }
-}
 
-private enum Patterns {
-    static let code = regex(#"`[^`]+`"#)
-    static let image = regex(#"!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)"#)
-    static let link = regex(#"(?<!!)\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)"#)
-    static let autolink = regex(#"\b(?:https?://|www\.)[^\s<>()]+[^\s<>().,;:!?'"*_~]"#)
-    static let bold = regex(#"(\*\*|__)(?=\S)(.+?)(?<=\S)\1"#)
-    static let strike = regex(#"~~(?=\S)(.+?)(?<=\S)~~"#)
-    static let highlight = regex(#"==(?=\S)(.+?)(?<=\S)=="#)
-    static let italicStar = regex(#"(?<![*\\])\*(?![*\s])([^*\n]+?)(?<![\s*\\])\*(?!\*)"#)
-    static let italicUnderscore = regex(#"(?<![\w_])_(?![_\s])([^_\n]+?)(?<![\s_])_(?![\w_])"#)
+    private enum Patterns {
+        static let code = regex(#"`[^`]+`"#)
+        static let image = regex(#"!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)"#)
+        static let link = regex(#"(?<!!)\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)"#)
+        static let autolink = regex(#"\b(?:https?://|www\.)[^\s<>()]+[^\s<>().,;:!?'"*_~]"#)
+        static let bold = regex(#"(\*\*|__)(?=\S)(.+?)(?<=\S)\1"#)
+        static let strike = regex(#"~~(?=\S)(.+?)(?<=\S)~~"#)
+        static let highlight = regex(#"==(?=\S)(.+?)(?<=\S)=="#)
+        static let italicStar = regex(#"(?<![*\\])\*(?![*\s])([^*\n]+?)(?<![\s*\\])\*(?!\*)"#)
+        static let italicUnderscore = regex(#"(?<![\w_])_(?![_\s])([^_\n]+?)(?<![\s_])_(?![\w_])"#)
 
-    private static func regex(_ pattern: String) -> NSRegularExpression {
-        // A literal pattern that fails to compile is a programmer error caught by the tests.
-        try! NSRegularExpression(pattern: pattern)
+        private static func regex(_ pattern: String) -> NSRegularExpression {
+            // A literal pattern that fails to compile is a programmer error caught by the tests.
+            try! NSRegularExpression(pattern: pattern)
+        }
     }
 }

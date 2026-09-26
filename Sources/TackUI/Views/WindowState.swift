@@ -10,8 +10,3 @@ final class WindowState {
     var swipeEdge: SwipeEdge?
     var swipeFlash: SwipeEdge?
 }
-
-enum SwipeEdge: Equatable {
-    case previous
-    case next
-}

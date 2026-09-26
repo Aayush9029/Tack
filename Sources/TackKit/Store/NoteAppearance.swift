@@ -14,4 +14,12 @@ public enum NoteAppearance: String, CaseIterable, Codable, Identifiable, QueryBi
         case .dark: "Dark"
         }
     }
+
+    public var symbol: String {
+        switch self {
+        case .system: "circle.lefthalf.filled"
+        case .light: "sun.max"
+        case .dark: "moon"
+        }
+    }
 }

@@ -462,9 +462,3 @@ public final class NoteWindowModel: Identifiable {
         } ?? nil
     }
 }
-
-public enum NavigationDirection: Equatable, Sendable {
-    case none
-    case forward
-    case backward
-}

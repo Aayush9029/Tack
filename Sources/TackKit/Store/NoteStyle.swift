@@ -14,4 +14,12 @@ public enum NoteStyle: String, CaseIterable, Codable, Identifiable, QueryBindabl
         case .classic: "Classic"
         }
     }
+
+    public var symbol: String {
+        switch self {
+        case .glass: "drop"
+        case .clear: "drop.halffull"
+        case .classic: "note"
+        }
+    }
 }

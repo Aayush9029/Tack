@@ -136,23 +136,17 @@ final class EditorTheme {
     /// Orange, so a highlight still shows on yellow paper.
     nonisolated static let highlight = NSColor(srgbRed: 1.0, green: 0.62, blue: 0.1, alpha: 0.38)
     nonisolated static let selection = NSColor(srgbRed: 0.0, green: 0.6, blue: 1.0, alpha: 0.24)
-}
 
-private struct FontKey: Hashable {
-    let bold: Bool
-    let italic: Bool
-    let scale: CGFloat
-    let code: Bool
-}
+    private struct FontKey: Hashable {
+        let bold: Bool
+        let italic: Bool
+        let scale: CGFloat
+        let code: Bool
+    }
 
-private struct WidthKey: Hashable {
-    let prefix: String
-    let font: String
-    let size: CGFloat
-}
-
-extension NSAppearance {
-    var isDark: Bool {
-        bestMatch(from: [.aqua, .darkAqua, .vibrantDark, .vibrantLight]).map { $0 == .darkAqua || $0 == .vibrantDark } ?? false
+    private struct WidthKey: Hashable {
+        let prefix: String
+        let font: String
+        let size: CGFloat
     }
 }

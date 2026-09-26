@@ -122,9 +122,9 @@ struct PaletteView: View {
             if case .active = phase { model.hover(row.id) }
         }
     }
-}
 
-private struct TaskKey: Equatable {
-    let page: PalettePage
-    let query: String
+    private struct TaskKey: Equatable {
+        let page: PalettePage
+        let query: String
+    }
 }
